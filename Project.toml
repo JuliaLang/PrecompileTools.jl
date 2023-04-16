@@ -1,13 +1,19 @@
 name = "Precompiler"
 uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
-authors = ["Tim Holy <tim.holy@gmail.com> and contributors"]
-version = "1.0.0-DEV"
+authors = ["Tim Holy <tim.holy@gmail.com>", "t-bltg <tf.bltg@gmail.com>", "and contributors"]
+version = "1.0.0"
+
+[deps]
+Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 
 [compat]
+Preferences = "1"
 julia = "1"
 
 [extras]
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [targets]
-test = ["Test"]
+test = ["Pkg", "Test", "UUIDs"]

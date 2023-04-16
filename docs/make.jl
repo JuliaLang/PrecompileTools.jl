@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(Precompiler, :DocTestSetup, :(using Precompiler); recursive=
 
 makedocs(;
     modules=[Precompiler],
-    authors="Tim Holy <tim.holy@gmail.com> and contributors",
+    authors="Tim Holy <tim.holy@gmail.com>, t-bltg <tf.bltg@gmail.com>, and contributors",
     repo="https://github.com/JuliaLang/Precompiler.jl/blob/{commit}{path}#{line}",
     sitename="Precompiler.jl",
     format=Documenter.HTML(;
@@ -16,6 +16,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Reference" => "reference.md",
     ],
 )
 
