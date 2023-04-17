@@ -13,3 +13,6 @@ Nevertheless, the two are not identical: the primary differences between Precomp
 - only Precompiler can be used by *package developers* to ensure a better experience for your users
 - only Precompiler allows you to update your packages without needing to rebuild Julia
 - only PackageCompiler dramatically speeds up loading time (i.e., `using ...`) for all the packages
+
+Precompiler started as [SnoopPrecompile](https://github.com/timholy/SnoopCompile.jl/tree/master/SnoopPrecompile), but
+it differs in naming and in how one disables precompilation.
