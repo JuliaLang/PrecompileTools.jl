@@ -22,5 +22,6 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/JuliaLang/Precompiler.jl",
+    push_preview=true,
     devbranch="main",
 )
