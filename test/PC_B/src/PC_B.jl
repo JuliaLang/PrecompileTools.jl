@@ -1,7 +1,7 @@
 module PC_B
 
-using Precompiler
+using PrecompileTools
 
-Precompiler.@cache missing_function(1)
+@compile_workload missing_function(1)
 
 end # module PC_B

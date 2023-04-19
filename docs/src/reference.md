@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = Precompiler
+CurrentModule = PrecompileTools
 ```
 
 # Reference (API)
 
-API documentation for [Precompiler](https://github.com/JuliaLang/Precompiler.jl).
+API documentation for [PrecompileTools](https://github.com/JuliaLang/PrecompileTools.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [Precompiler]
+Modules = [PrecompileTools]
 ```

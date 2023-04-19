@@ -1,8 +1,9 @@
-module Precompiler
+module PrecompileTools
 
-@static if VERSION >= v"1.6"
+if VERSION >= v"1.6"
     using Preferences
 end
+export @setup_workload, @compile_workload
 
 const verbose = Ref(false)    # if true, prints all the precompiles
 const have_inference_tracking = isdefined(Core.Compiler, :__set_measure_typeinf)
@@ -18,22 +19,22 @@ function precompile_roots(roots)
 end
 
 """
-    Precompiler.@cache f(args...)
+    @compile_workload f(args...)
 
-`precompile` (and save in the cache file) any method-calls that occur inside the expression. All calls (direct or indirect) inside a
-`Precompiler.@cache` block will be cached.
+`precompile` (and save in the compile_workload file) any method-calls that occur inside the expression. All calls (direct or indirect) inside a
+`@compile_workload` block will be cached.
 
-`Precompiler.@cache` has three key features:
+`@compile_workload` has three key features:
 
 1. code inside runs only when the package is being precompiled (i.e., a `*.ji`
-   precompile cache file is being written)
+   precompile compile_workload file is being written)
 2. the interpreter is disabled, ensuring your calls will be compiled
 3. both direct and indirect callees will be precompiled, even for methods defined in other packages
    and even for runtime-dispatched callees (requires Julia 1.8 and above).
 
 !!! note
     For comprehensive precompilation, ensure the first usage of a given method/argument-type combination
-    occurs inside `Precompiler.@cache`.
+    occurs inside `@compile_workload`.
 
     In detail: runtime-dispatched callees are captured only when type-inference is executed, and they
     are inferred only on first usage. Inferrable calls that trace back to a method defined in your package,
@@ -45,11 +46,11 @@ end
         - direct calls to methods defined in Base or other packages OR
         - indirect runtime-dispatched calls to such methods.
 """
-macro cache(ex::Expr)
+macro compile_workload(ex::Expr)
     local iscompiling = if Base.VERSION < v"1.6"
         :(ccall(:jl_generating_output, Cint, ()) == 1)
     else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && !Precompiler.@load_preference("skip_precompile", false)))
+        :((ccall(:jl_generating_output, Cint, ()) == 1 && PrecompileTools.@load_preference("precompile_workload", true)))
     end
     if have_force_compile
         ex = quote
@@ -75,47 +76,47 @@ macro cache(ex::Expr)
                 Core.Compiler.__set_measure_typeinf(false)
                 Core.Compiler.Timings.close_current_timer()
             end
-            $Precompiler.precompile_roots(Core.Compiler.Timings._timings[1].children)
+            $PrecompileTools.precompile_roots(Core.Compiler.Timings._timings[1].children)
         end
     end
     return esc(quote
-        if $iscompiling || $Precompiler.verbose[]
+        if $iscompiling || $PrecompileTools.verbose[]
             $ex
         end
     end)
 end
 
 """
-    Precompiler.@setup begin
+    @setup_workload begin
         vars = ...
         ⋮
     end
 
-Run the code block only during package precompilation. `Precompiler.@setup` is often used in combination
-with [`Precompiler.@cache`](@ref), for example:
+Run the code block only during package precompilation. `@setup_workload` is often used in combination
+with [`@compile_workload`](@ref), for example:
 
-    Precompiler.@setup begin
+    @setup_workload begin
         vars = ...
-        @cache begin
+        @compile_workload begin
             y = f(vars...)
             g(y)
             ⋮
         end
     end
 
-`Precompiler.@setup` does not force compilation (though it may happen anyway) nor intentionally capture
+`@setup_workload` does not force compilation (though it may happen anyway) nor intentionally capture
 runtime dispatches (though they will be precompiled anyway if the runtime-callee is for a method belonging
 to your package).
 """
-macro setup(ex::Expr)
+macro setup_workload(ex::Expr)
     local iscompiling = if Base.VERSION < v"1.6"
         :(ccall(:jl_generating_output, Cint, ()) == 1)
     else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && !Precompiler.@load_preference("skip_precompile", false)))
+        :((ccall(:jl_generating_output, Cint, ()) == 1 && PrecompileTools.@load_preference("precompile_workload", true)))
     end
     return esc(quote
         let
-            if $iscompiling || $Precompiler.verbose[]
+            if $iscompiling || $PrecompileTools.verbose[]
                 $ex
             end
         end

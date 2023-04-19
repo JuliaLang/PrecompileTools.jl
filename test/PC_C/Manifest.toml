@@ -8,7 +8,7 @@ project_hash = "354ab382158fcbfd4f677a3fe08347e46de3e0c8"
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
-[[deps.Precompiler]]
+[[deps.PrecompileTools]]
 deps = ["Preferences"]
 path = "../.."
 uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"

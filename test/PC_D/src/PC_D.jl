@@ -1,10 +1,10 @@
 module PC_D
 
-using Precompiler
-using Precompiler.Preferences
+using PrecompileTools
+using PrecompileTools.Preferences
 
-Precompiler.@setup begin
-    Precompiler.@cache begin
+@setup_workload begin
+    @compile_workload begin
         global workload_ran = true
     end
 end
