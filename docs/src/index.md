@@ -145,7 +145,23 @@ There are cases where you might want to precompile code but cannot safely *execu
 In that case, your best option is to fall back on Julia's own `precompile` function.
 However, as explained in [How PrecompileTools works](@ref), there are some differences between `precompile` and `@compile_workload`;
 most likely, you may need multiple `precompile` directives.
-Analysis with [SnoopCompile](https://github.com/timholy/SnoopCompile.jl) may be required to obtain the results you want.
+Analysis with [SnoopCompile](https://github.com/timholy/SnoopCompile.jl) may be required to obtain the results you want;
+in particular, combining `@snoopi_deep` and `parcel` will allow you to generate a set of `precompile` directives that can be `include`d in your module definition.
+
+Be aware that `precompile` directives are more specific to the Julia version, CPU (integer width), and OS than running a workload.
+
+## Troubleshooting
+
+Ensure your workload "works" (runs without error) when copy/pasted into the REPL.
+If it produces an error only when placed inside `@precompile_workload`, check whether your workload runs when wrapped in a
+
+```
+let
+    # workload goes here
+end
+```
+
+block.
 
 ## Package developers: reducing the cost of precompilation during development
 
