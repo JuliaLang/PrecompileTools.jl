@@ -1,6 +1,6 @@
 module PC_C
 
-using Precompiler
+using PrecompileTools
 
 # mimic `RecipesBase` code - see github.com/JuliaPlots/Plots.jl/issues/4597 and #317
 module RB
@@ -22,9 +22,9 @@ module RB
 end
 using .RB
 
-Precompiler.@setup begin
+@setup_workload begin
     struct Foo end
-    Precompiler.@cache begin
+    @compile_workload begin
         @recipe f(::Foo) = nothing
     end
 end

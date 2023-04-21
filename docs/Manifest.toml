@@ -68,7 +68,7 @@ git-tree-sha1 = "478ac6c952fddd4399e71d4779797c538d0ff2bf"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 version = "2.5.8"
 
-[[deps.Precompiler]]
+[[deps.PrecompileTools]]
 deps = ["Preferences"]
 path = ".."
 uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"

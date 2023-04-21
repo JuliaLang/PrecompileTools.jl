@@ -1,16 +1,16 @@
-using Precompiler
+using PrecompileTools
 using Documenter
 
-DocMeta.setdocmeta!(Precompiler, :DocTestSetup, :(using Precompiler); recursive=true)
+DocMeta.setdocmeta!(PrecompileTools, :DocTestSetup, :(using PrecompileTools); recursive=true)
 
 makedocs(;
-    modules=[Precompiler],
+    modules=[PrecompileTools],
     authors="Tim Holy <tim.holy@gmail.com>, t-bltg <tf.bltg@gmail.com>, and contributors",
-    repo="https://github.com/JuliaLang/Precompiler.jl/blob/{commit}{path}#{line}",
-    sitename="Precompiler.jl",
+    repo="https://github.com/JuliaLang/PrecompileTools.jl/blob/{commit}{path}#{line}",
+    sitename="PrecompileTools.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://JuliaLang.github.io/Precompiler.jl",
+        canonical="https://JuliaLang.github.io/PrecompileTools.jl",
         edit_link="main",
         assets=String[],
     ),
@@ -21,7 +21,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/JuliaLang/Precompiler.jl",
+    repo="github.com/JuliaLang/PrecompileTools.jl",
     push_preview=true,
     devbranch="main",
 )

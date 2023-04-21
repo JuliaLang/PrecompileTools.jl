@@ -1,9 +1,9 @@
-using Precompiler
+using PrecompileTools
 using Test
 using Pkg
 using UUIDs
 
-@testset "Precompiler.jl" begin
+@testset "PrecompileTools.jl" begin
     specializations(m::Method) = isdefined(Base, :specializations) ? Base.specializations(m) : m.specializations
 
     push!(LOAD_PATH, @__DIR__)
@@ -11,15 +11,15 @@ using UUIDs
     using PC_A
     @test !isdefined(PC_A, :list)
     if VERSION >= v"1.8"
-        # Check that calls inside @setup are not precompiled
+        # Check that calls inside @setup_workload are not precompiled
         m = which(Tuple{typeof(Base.vect), Vararg{T}} where T)
         have_mytype = false
         for mi in specializations(m)
             mi === nothing && continue
             have_mytype |= Base.unwrap_unionall(mi.specTypes).parameters[2] === PC_A.MyType
         end
-        have_mytype && @warn "Code in setup block was precompiled"
-        # Check that calls inside @cache are precompiled
+        have_mytype && @warn "Code in setup_workload block was precompiled"
+        # Check that calls inside @compile_workload are precompiled
         m = only(methods(PC_A.call_findfirst))
         count = 0
         for mi in specializations(m)
@@ -68,10 +68,10 @@ using UUIDs
         Pkg.activate("PC_D")
         using PC_D
 
-        Precompiler.Preferences.set_preferences!(PC_D, "skip_precompile" => true)
+        PrecompileTools.Preferences.set_preferences!(PC_D, "precompile_workload" => false)
         @test success(run(`$(Base.julia_cmd()) --project=$(joinpath(@__DIR__, "PC_D")) -e $script 0`))
 
-        Precompiler.Preferences.delete_preferences!(PC_D, "skip_precompile"; force = true)
+        PrecompileTools.Preferences.delete_preferences!(PC_D, "precompile_workload"; force = true)
         @test success(run(`$(Base.julia_cmd()) --project=$(joinpath(@__DIR__, "PC_D")) -e $script 1`))
         Pkg.activate(projfile)
     end

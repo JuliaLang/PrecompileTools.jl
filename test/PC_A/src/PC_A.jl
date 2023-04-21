@@ -1,6 +1,6 @@
 module PC_A
 
-using Precompiler
+using PrecompileTools
 
 struct MyType
     x::Int
@@ -17,9 +17,9 @@ function call_findfirst(x, list)
     return findfirst(==(inferencebarrier(x)), inferencebarrier(list))
 end
 
-Precompiler.@setup begin
+@setup_workload begin
     list = [MyType(1), MyType(2), MyType(3)]
-    Precompiler.@cache begin
+    @compile_workload begin
         call_findfirst(MyType(2), list)
     end
 end

@@ -1,4 +1,4 @@
-name = "Precompiler"
+name = "PrecompileTools"
 uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 authors = ["Tim Holy <tim.holy@gmail.com>", "t-bltg <tf.bltg@gmail.com>", "and contributors"]
 version = "1.0.0"
