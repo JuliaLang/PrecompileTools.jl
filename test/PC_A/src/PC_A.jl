@@ -1,6 +1,6 @@
 module PC_A
 
-using PrecompileTools
+using PrecompileTools: @setup_workload, @compile_workload
 
 struct MyType
     x::Int

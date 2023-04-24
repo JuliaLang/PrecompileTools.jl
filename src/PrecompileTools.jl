@@ -50,7 +50,7 @@ macro compile_workload(ex::Expr)
     local iscompiling = if Base.VERSION < v"1.6"
         :(ccall(:jl_generating_output, Cint, ()) == 1)
     else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && PrecompileTools.@load_preference("precompile_workload", true)))
+        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.@load_preference("precompile_workload", true)))
     end
     if have_force_compile
         ex = quote
@@ -112,7 +112,7 @@ macro setup_workload(ex::Expr)
     local iscompiling = if Base.VERSION < v"1.6"
         :(ccall(:jl_generating_output, Cint, ()) == 1)
     else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && PrecompileTools.@load_preference("precompile_workload", true)))
+        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.@load_preference("precompile_workload", true)))
     end
     return esc(quote
         let
