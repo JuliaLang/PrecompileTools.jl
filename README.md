@@ -26,9 +26,9 @@ PrecompileTools differs in naming and in how one disables precompilation, but is
 
 This new package was created for several reasons:
 
-- The name "SnoopPrecompile" was easily confused with "SnoopCompile," a package designed for analyzing rather than enacting precompilation.
-- SnoopPrecompile/PrecompileTools has become (directly or indirectly) a dependency for much of the Julia ecosystem, a trend that seems likely to grow with time. It makes sense to host it in a more central location than one developer’s personal account.
+- PrecompileTools has become (directly or indirectly) a dependency of much of the Julia ecosystem, a trend that seems likely to grow with time.
+    Therefore, this package is now hosted in the JuliaLang GitHub organization.
 - As Julia's own stdlibs migrate to become independently updateable (true for DelimitedFiles in Julia 1.9, with others anticipated for Julia 1.10), several of them would like to use PrecompileTools for high-quality precompilation. That requires making PrecompileTools its own "upgradable stdlib."
-- We wanted to change the [use of Preferences](https://github.com/timholy/SnoopCompile.jl/issues/356) to make packages more independent of one another. Since this would have been a breaking change, it seemed like a good opportunity to fix other issues, too.
+- This package introduces the [use of Preferences](https://github.com/timholy/SnoopCompile.jl/issues/356) to make packages more independent of one another. Since this would have been a breaking change, it seemed like a good opportunity to fix other issues, too.
 
-For more information and discussion, see this [Discourse post](https://discourse.julialang.org/t/ann-snoopprecompile-precompiletools/97882).
+For more information and discussion, see the [Discourse announcement post](https://discourse.julialang.org/t/ann-snoopprecompile-precompiletools/97882).
