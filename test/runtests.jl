@@ -86,8 +86,9 @@ using UUIDs
             close(io)
             str = read(path, String)
             @test occursin("MethodInstance for", str)
-            @test occursin("PC_E.f(::$Int)", str)
-            @test occursin("PC_E.f(::String)", str)
+            modscope = Base.VERSION >= v"1.7" ? "PC_E." : ""
+            @test occursin("$(modscope)f(::$Int)", str)
+            @test occursin("$(modscope)f(::String)", str)
         end
         PrecompileTools.verbose[] = oldval
     end
