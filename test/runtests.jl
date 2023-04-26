@@ -75,4 +75,20 @@ using UUIDs
         @test success(run(`$(Base.julia_cmd()) --project=$(joinpath(@__DIR__, "PC_D")) -e $script 1`))
         Pkg.activate(projfile)
     end
+
+    if VERSION >= v"1.6"
+        oldval = PrecompileTools.verbose[]
+        PrecompileTools.verbose[] = true
+        mktemp() do path, io
+            redirect_stdout(io) do
+                include(joinpath(@__DIR__, "PC_E", "src", "PC_E.jl"))
+            end
+            close(io)
+            str = read(path, String)
+            @test occursin("MethodInstance for", str)
+            @test occursin("PC_E.f(::$Int)", str)
+            @test occursin("PC_E.f(::String)", str)
+        end
+        PrecompileTools.verbose[] = oldval
+    end
 end
