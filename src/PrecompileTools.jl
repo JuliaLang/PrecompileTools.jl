@@ -9,6 +9,14 @@ const verbose = Ref(false)    # if true, prints all the precompiles
 const have_inference_tracking = isdefined(Core.Compiler, :__set_measure_typeinf)
 const have_force_compile = isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("#@force_compile"))
 
+function workload_enabled(mod::Module)
+    try
+        load_preference(mod, "precompile_workload", true)
+    catch
+        true
+    end
+end
+
 function precompile_roots(roots)
     @assert have_inference_tracking
     for child in roots
@@ -50,7 +58,7 @@ macro compile_workload(ex::Expr)
     local iscompiling = if Base.VERSION < v"1.6"
         :(ccall(:jl_generating_output, Cint, ()) == 1)
     else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.@load_preference("precompile_workload", true)))
+        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     end
     if have_force_compile
         ex = quote
@@ -112,7 +120,7 @@ macro setup_workload(ex::Expr)
     local iscompiling = if Base.VERSION < v"1.6"
         :(ccall(:jl_generating_output, Cint, ()) == 1)
     else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.@load_preference("precompile_workload", true)))
+        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     end
     return esc(quote
         let
