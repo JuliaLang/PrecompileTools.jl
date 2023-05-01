@@ -41,3 +41,12 @@ Julia does a mix of these: it does **B** up to 3 methods, and then **A** thereaf
 This example was framed as an experiment at the REPL, but it is also relevant if you load two packages: `PkgX` might define `f` and `g`, and `PkgY` might load `PkgX` and define a second method of `PkgX.f`.
 Any precompilation that occurs in `PkgX` doesn't know what's going to happen in `PkgY`.
 Therefore, unless you want to defer *all* compilation (including for `Base`) until the entire session is loaded and then closed to further extension, you have to make the same choice between **A** and **B**.
+
+Given that invalidation is necessary if Julia code is to be both fast and deliver the answers you expect, invalidation is a good thing!
+But sometimes Julia "defensively" throws out code that might be correct but can't be proved to be correct by Julia's type-inference machinery; such cases of "spurious invalidation" serve to (uselessly) increase latency and worsen the Julia experience.
+Except in cases of [piracy](https://docs.julialang.org/en/v1/manual/style-guide/#Avoid-type-piracy), invalidation is a risk
+only for poorly-inferred code. With our example of `f` and `g` above, the invalidations were necessary because `list` was
+a `Vector{Any}`, meaning that the elements might be of `Any` type and therefore Julia can't predict in advance which
+method(s) of `f` would be applicable. Were one to create `list` as, say, `list = Union{MyObj,Int}[]`, Julia would know much more
+about the types of the objects it applies `f` to: a new method like `f(::String)` would not trigger invalidations of code
+that was run on a `list::Vector{Union{MyObj,Int}}`.

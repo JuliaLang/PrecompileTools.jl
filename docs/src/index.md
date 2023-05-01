@@ -12,6 +12,8 @@ The main tool in `PrecompileTools` is a macro, `@compile_workload`, which precom
 It also includes a second macro, `@setup_workload`, which can be used to "mark" a block of code as being relevant only
 for precompilation but which does not itself force compilation of `@setup_workload` code. (`@setup_workload` is typically used to generate
 test data using functions that you don't need to precompile in your package.)
+Finally, `PrecompileTools` includes `@recompile_invalidations` to mitigate the undesirable consequences of *invalidations*.
+These different tools are demonstrated below.
 
 ## Tutorial: forcing precompilation with workloads
 
@@ -141,7 +143,7 @@ All the packages will be loaded, together with their precompiled code.
 
 ## Tutorial: "healing" invalidations
 
-Julia sometimes "invalidates" previously compiled code (see [Why does Julia invalidate code?](@ref)).
+Julia sometimes *invalidates* previously compiled code (see [Why does Julia invalidate code?](@ref)).
 PrecompileTools provides a mechanism to recompile the invalidated code so that you get the full benefits
 of precompilation. This capability can be used in "Startup" packages (like the one described
 above), as well as by package developers.
