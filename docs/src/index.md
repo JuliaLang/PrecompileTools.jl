@@ -13,7 +13,7 @@ It also includes a second macro, `@setup_workload`, which can be used to "mark" 
 for precompilation but which does not itself force compilation of `@setup_workload` code. (`@setup_workload` is typically used to generate
 test data using functions that you don't need to precompile in your package.)
 
-## Tutorial
+## Tutorial: forcing precompilation with workloads
 
 No matter whether you're a package developer or a user looking to make your own workloads start faster,
 the basic workflow of `PrecompileTools` is the same.
@@ -143,8 +143,8 @@ All the packages will be loaded, together with their precompiled code.
 
 Julia sometimes "invalidates" previously compiled code (see [Why does Julia invalidate code?](@ref)).
 PrecompileTools provides a mechanism to recompile the invalidated code so that you get the full benefits
-of precompilation. This capability is generally intended to be used in "Startup" packages as described
-above, although there may be cases where it could be used by package authors as well.
+of precompilation. This capability can be used in "Startup" packages (like the one described
+above), as well as by package developers.
 
 The basic usage is simple: wrap expressions that might invalidate with `@recompile_invalidations`.
 Invalidation can be triggered by defining new methods of external functions, including during
@@ -164,6 +164,37 @@ end
 ```
 
 Note that recompiling invalidations can be useful even if you don't add any additional workloads.
+
+Alternatively, if you're a package developer worried about "collateral damage" from extending functions
+owned by Base or other package (i.e., those that require `import` or module-scoping when defining the method),
+you can wrap those method definitions:
+
+```julia
+module MyContainers
+
+using AnotherPackage
+using PrecompileTools
+
+struct Container
+    list::Vector{Any}
+end
+
+# This is a function created by this package, so it doesn't need to be wrapped
+make_container() = Container([])
+
+@recompile_invalidations begin
+    # Only those methods extending Base or other packages need to go here
+    Base.push!(obj::Container, x) = ...
+    function AnotherPackage.foo(obj::Container)
+        ⋮
+    end
+end
+
+end
+```
+
+You can have more than one `@recompile_invalidations` block in a module. For example, you might use one to wrap your
+`using`s, and a second to wrap your method extensions.
 
 ## When you can't run a workload
 
