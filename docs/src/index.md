@@ -146,6 +146,14 @@ PrecompileTools provides a mechanism to recompile the invalidated code so that y
 of precompilation. This capability can be used in "Startup" packages (like the one described
 above), as well as by package developers.
 
+!!! tip
+    Excepting [piracy](https://docs.julialang.org/en/v1/manual/style-guide/#Avoid-type-piracy) (which is heavily discouraged),
+    *type-stable (i.e., well-inferred) code cannot be invalidated.* If invalidations are a problem, an even better option
+    than "healing" the invalidations is improving the inferrability of the "victim": not only will you prevent
+    invalidations, you may get faster performance and slimmer binaries. Packages that can help identify
+    inference problems and invalidations include [SnoopCompile](https://github.com/timholy/SnoopCompile.jl),
+    [JET](https://github.com/aviatesk/JET.jl), and [Cthulhu](https://github.com/JuliaDebug/Cthulhu.jl).
+
 The basic usage is simple: wrap expressions that might invalidate with `@recompile_invalidations`.
 Invalidation can be triggered by defining new methods of external functions, including during
 package loading. Using the "Startup" package above, you might wrap the `using` statements:
