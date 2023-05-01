@@ -139,6 +139,32 @@ All the packages will be loaded, together with their precompiled code.
 !!! tip
     If desired, the [Reexport package](https://github.com/simonster/Reexport.jl) can be used to ensure these packages are also exported by `Startup`.
 
+## Tutorial: "healing" invalidations
+
+Julia sometimes "invalidates" previously compiled code (see [Why does Julia invalidate code?](@ref)).
+PrecompileTools provides a mechanism to recompile the invalidated code so that you get the full benefits
+of precompilation. This capability is generally intended to be used in "Startup" packages as described
+above, although there may be cases where it could be used by package authors as well.
+
+The basic usage is simple: wrap expressions that might invalidate with `@recompile_invalidations`.
+Invalidation can be triggered by defining new methods of external functions, including during
+package loading. Using the "Startup" package above, you might wrap the `using` statements:
+
+```julia
+module Startup
+
+using PrecompileTools
+@recompile_invalidations begin
+    using LotsOfPackages...
+end
+
+# Maybe a @compile_workload here?
+
+end
+```
+
+Note that recompiling invalidations can be useful even if you don't add any additional workloads.
+
 ## When you can't run a workload
 
 There are cases where you might want to precompile code but cannot safely *execute* that code: for example, you may need to connect to a database, or perhaps this is a plotting package but you may be currently on a headless server lacking a display, etc.
@@ -198,20 +224,3 @@ julia> include("src/MyPackage.jl");
 This will only show the direct- or runtime-dispatched method instances that got precompiled (omitting their inferrable callees).
 For a more comprehensive list of all items stored in the compile_workload file, see
 [PkgCacheInspector](https://github.com/timholy/PkgCacheInspector.jl).
-
-## How PrecompileTools works
-
-Julia itself has a function `precompile`, to which you can pass specific signatures to force precompilation.
-For example, `precompile(foo, (ArgType1, ArgType2))` will precompile `foo(::ArgType1, ::ArgType2)` *and all of its inferrable callees*.
-Alternatively, you can just execute some code at "top level" within the module, and during precompilation any method or signature "owned" by your package will also be precompiled.
-Thus, base Julia itself has substantial facilities for precompiling code.
-
-`@compile_workload` adds one key feature: the *non-inferrable callees* (i.e., those called via runtime dispatch) that get
-made inside the `@compile_workload` block will also be cached, *regardless of module ownership*. In essence, it's like you're adding
-an explicit `precompile(noninferrable_callee, (OtherArgType1, ...))` for every runtime-dispatched call made inside `@compile_workload`.
-
-`PrecompileTools` adds other features as well:
-
-- Statements that occur inside a `@compile_workload` block are executed only if the package is being actively precompiled; it does not run when the package is loaded, nor if you're running Julia with `--compiled-modules=no`.
-- Compared to just running some workload at top-level, `@compile_workload` ensures that your code will be compiled (it disables the interpreter inside the block)
-- PrecompileTools also defines `@setup_workload`, which you can use to create data for use inside a `@compile_workload` block. Like `@compile_workload`, this code only runs when you are precompiling the package, but it does not necessarily result in the `@setup_workload` code being stored in the package precompile file.
