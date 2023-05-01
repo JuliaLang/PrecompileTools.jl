@@ -40,7 +40,7 @@ Julia does a mix of these: it does **B** up to 3 methods, and then **A** thereaf
 
 This example was framed as an experiment at the REPL, but it is also relevant if you load two packages: `PkgX` might define `numchildren` and `total_children`, and `PkgY` might load `PkgX` and define a second method of `PkgX.numchildren`.
 Any precompilation that occurs in `PkgX` doesn't know what's going to happen in `PkgY`.
-Therefore, unless you want to defer *all* compilation (including for `Base`) until the entire session is loaded and then closed to further extension, you have to make the same choice between **A** and **B**.
+Therefore, unless you want to defer *all* compilation (including for `Base`) until the entire session is loaded and then closed to further extension, you have to make the same choice between options **A** and **B**.
 
 Given that invalidation is necessary if Julia code is to be both fast and deliver the answers you expect, invalidation is a good thing!
 But sometimes Julia "defensively" throws out code that might be correct but can't be proved to be correct by Julia's type-inference machinery; such cases of "spurious invalidation" serve to (uselessly) increase latency and worsen the Julia experience.
@@ -48,5 +48,5 @@ Except in cases of [piracy](https://docs.julialang.org/en/v1/manual/style-guide/
 only for poorly-inferred code. With our example of `numchildren` and `total_children` above, the invalidations were necessary because `list` was
 a `Vector{Any}`, meaning that the elements might be of `Any` type and therefore Julia can't predict in advance which
 method(s) of `numchildren` would be applicable. Were one to create `list` as, say, `list = Union{BinaryNode,TrinaryNode}[]` (where `TrinaryNode` is some other kind of object with children), Julia would know much more
-about the types of the objects it applies `numchildren` to: yet another new method like `numchildren(::ArbitraryNode)` would not trigger invalidations of code
-that was run on a `list::Vector{Union{BinaryNode,TrinaryNode}}`.
+about the types of the objects to which it applies `numchildren`: defining yet another new method like `numchildren(::ArbitraryNode)` would not trigger invalidations of code
+that was compiled for a `list::Vector{Union{BinaryNode,TrinaryNode}}`.
