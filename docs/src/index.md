@@ -175,7 +175,7 @@ end
 
 Note that recompiling invalidations can be useful even if you don't add any additional workloads.
 
-Alternatively, if you're a package developer worried about "collateral damage" from extending functions
+Alternatively, if you're a package developer worried about "collateral damage" you may cause by extending functions
 owned by Base or other package (i.e., those that require `import` or module-scoping when defining the method),
 you can wrap those method definitions:
 
@@ -205,6 +205,16 @@ end
 
 You can have more than one `@recompile_invalidations` block in a module. For example, you might use one to wrap your
 `using`s, and a second to wrap your method extensions.
+
+!!! warning
+    Package developers should be aware of the tradeoffs in using `@recompile_invalidations` to wrap method extensions:
+
+    - the benefit is that you might deliver a better out-of-the-box experience for your users, without them needing to customize anything
+    - the downside is that it will increase the precompilation time for your package. Worse, what can be invalidated once can sometimes be invalidated again by a later package, and if that happens the time spent recompiling is wasted.
+
+    Using `@recompile_invalidations` in a "Startup" package is, in a sense, safer because it waits for all the code to be loaded before recompiling anything. On the other hand, this requires users to implement their own customizations.
+
+    Package developers are encouraged to try to fix "known" invalidations rather than relying reflexively on `@recompile_invalidations`.
 
 ## When you can't run a workload
 
