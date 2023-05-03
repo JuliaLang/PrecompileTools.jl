@@ -17,12 +17,31 @@ function workload_enabled(mod::Module)
     end
 end
 
+"""
+    check_edges(node)
+
+Recursively ensure that all callees of `node` are precompiled. This is (rarely) necessary
+because sometimes there is no backedge from callee to caller (xref https://github.com/JuliaLang/julia/issues/49617),
+and `staticdata.c` relies on the backedge to trace back to a MethodInstance that is tagged `mi.precompiled`.
+"""
+function check_edges(node)
+    parentmi = node.mi_info.mi
+    for child in node.children
+        childmi = child.mi_info.mi
+        if !(isdefined(childmi, :backedges) && parentmi ∈ childmi.backedges)
+            precompile(childmi.specTypes)
+        end
+        check_edges(child)
+    end
+end
+
 function precompile_roots(roots)
     @assert have_inference_tracking
     for child in roots
         mi = child.mi_info.mi
         precompile(mi.specTypes) # TODO: Julia should allow one to pass `mi` directly (would handle `invoke` properly)
         verbose[] && println(mi)
+        check_edges(child)
     end
 end
 
