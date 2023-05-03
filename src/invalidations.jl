@@ -48,12 +48,6 @@ function invalidation_leaves(invlist)
                     cachequeued(nothing, 0)
                     push!(umis, item)
                 end
-                # if nextitem == "verify_methods"
-                #     # Skip over the cause, which can also be a MethodInstance
-                #     # These may be superseded, but they aren't technically invalidated
-                #     # (e.g., could still be called via `invoke`)
-                #     i += 2
-                # end
                 if isa(nextitem, Integer)
                     cachequeued(item, nextitem)
                     i += 2
