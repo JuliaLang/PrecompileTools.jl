@@ -16,6 +16,8 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Invalidations" => "invalidations.md",
+        "How PrecompileTools works" => "explanations.md",
         "Reference" => "reference.md",
     ],
 )

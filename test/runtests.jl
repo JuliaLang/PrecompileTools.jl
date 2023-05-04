@@ -92,4 +92,102 @@ using UUIDs
         end
         PrecompileTools.verbose[] = oldval
     end
+
+    if isdefined(PrecompileTools, :invalidation_leaves)
+        # Mimic the format written to `_jl_debug_method_invalidation`
+        # As a source of MethodInstances, `getproperty` has lots
+        m = which(getproperty, (Any, Symbol))
+        mis = Core.MethodInstance[]
+        for mi in specializations(m)
+            length(mis) >= 10 && break
+            mi === nothing && continue
+            push!(mis, mi)
+        end
+        # These mimic the invalidation lists in SnoopCompile's `test/snoopr.jl`
+        invs = Any[mis[1], 0, mis[2], 1, Tuple{}, m, "jl_method_table_insert"]
+        @test PrecompileTools.invalidation_leaves(invs) == Set([mis[2]])
+        invs = Any[mis[1], 0, mis[2], 1, mis[3], 1, Tuple{}, m, "jl_method_table_insert"]
+        @test PrecompileTools.invalidation_leaves(invs) == Set([mis[2], mis[3]])
+        invs = Any[mis[1], 0, mis[2], 1, Tuple{}, mis[1], 1, mis[3], "jl_method_table_insert", m, "jl_method_table_insert"]
+        @test PrecompileTools.invalidation_leaves(invs) == Set(mis[1:3])
+        invs = Any[mis[1], 1, mis[2], "jl_method_table_disable", m, "jl_method_table_disable"]
+        @test PrecompileTools.invalidation_leaves(invs) == Set([mis[1], mis[2]])
+        invs = Any[mis[1], 1, mis[2], "jl_method_table_disable", mis[3], "jl_method_table_insert", m]
+        @test Set([mis[1], mis[2]]) ⊆ PrecompileTools.invalidation_leaves(invs)
+        invs = Any[mis[1], 1, mis[2], "jl_method_table_insert", mis[2], "invalidate_mt_cache", m, "jl_method_table_insert"]
+        @test PrecompileTools.invalidation_leaves(invs) == Set([mis[1], mis[2]])
+        invs = Any[Tuple{}, "insert_backedges_callee", 55, Any[m], mis[2], "verify_methods", 55]
+        @test PrecompileTools.invalidation_leaves(invs) == Set([mis[2]])
+
+        # Add a real invalidation & repair test
+        cproj = Base.active_project()
+        mktempdir() do dir
+            push!(LOAD_PATH, dir)
+            cd(dir) do
+                for ((pkg1, pkg2, pkg3), recompile) in ((("RC_A", "RC_B", "RC_C"), false,),
+                                                        (("RC_D", "RC_E", "RC_F"), true))
+                    Pkg.generate(pkg1)
+                    open(joinpath(dir, pkg1, "src", pkg1*".jl"), "w") do io
+                        println(io, """
+                        module $pkg1
+                        nbits(::Int8) = 8
+                        nbits(::Int16) = 16
+                        call_nbits(c) = nbits(only(c))
+                        begin
+                            Base.Experimental.@force_compile
+                            call_nbits(Any[Int8(5)])
+                        end
+                        end
+                        """)
+                    end
+                    Pkg.generate(pkg2)
+                    Pkg.activate(joinpath(dir, pkg2))
+                    Pkg.develop(PackageSpec(path=joinpath(dir, pkg1)))
+                    open(joinpath(dir, pkg2, "src", pkg2*".jl"), "w") do io
+                        println(io, """
+                        module $pkg2
+                        using $pkg1
+                        $(pkg1).nbits(::Int32) = 32
+                        end
+                        """)
+                    end
+                    # pkg3 is like a "Startup" package that recompiles the invalidations from loading the "code universe"
+                    Pkg.generate(pkg3)
+                    Pkg.activate(joinpath(dir, pkg3))
+                    Pkg.develop(PackageSpec(path=joinpath(dir, pkg2)))
+                    Pkg.develop(PackageSpec(path=dirname(@__DIR__)))   # depend on PrecompileTools
+                    open(joinpath(dir, pkg3, "src", pkg3*".jl"), "w") do io
+                        if recompile
+                            println(io, """
+                            module $pkg3
+                            using PrecompileTools
+                            @recompile_invalidations using $pkg2
+                            end
+                            """)
+                        else
+                            println(io, """
+                            module $pkg3
+                            using PrecompileTools
+                            using $pkg2
+                            end
+                            """)
+                        end
+                    end
+
+                    @eval using $(Symbol(pkg3))
+                    mod3 = getglobal(@__MODULE__, Symbol(pkg3))
+                    mod2 = getglobal(mod3, Symbol(pkg2))
+                    mod1 = getglobal(mod2, Symbol(pkg1))
+                    m = only(methods(mod1.call_nbits))
+                    mi = first(specializations(m))
+                    wc = Base.get_world_counter()
+                    @test recompile ? mi.cache.max_world >= wc : mi.cache.max_world < wc
+                end
+            end
+            pop!(LOAD_PATH)
+        end
+        Pkg.activate(cproj)
+    end
+
+    pop!(LOAD_PATH)
 end
