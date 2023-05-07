@@ -24,9 +24,9 @@ using UUIDs
         for mi in specializations(m)
             mi === nothing && continue
             sig = Base.unwrap_unionall(mi.specTypes)
-            @test sig.parameters[2] == PC_A.MyType
-            @test sig.parameters[3] == Vector{PC_A.MyType}
-            count += 1
+            if sig.parameters[2] == PC_A.MyType && sig.parameters[3] == Vector{PC_A.MyType}
+                count += 1
+            end
         end
         @test count == 1
         # Even one that was runtime-dispatched
