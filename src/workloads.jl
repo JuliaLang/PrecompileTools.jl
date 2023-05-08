@@ -130,10 +130,8 @@ macro setup_workload(ex::Expr)
         :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     end
     return esc(quote
-        let
-            if $iscompiling || $PrecompileTools.verbose[]
-                $ex
-            end
+        if $iscompiling || $PrecompileTools.verbose[]
+            $ex
         end
     end)
 end

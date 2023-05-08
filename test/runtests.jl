@@ -9,7 +9,6 @@ using UUIDs
     push!(LOAD_PATH, @__DIR__)
 
     using PC_A
-    @test !isdefined(PC_A, :list)
     if VERSION >= v"1.8"
         # Check that calls inside @setup_workload are not precompiled
         m = which(Tuple{typeof(Base.vect), Vararg{T}} where T)
