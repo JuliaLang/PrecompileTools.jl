@@ -9,7 +9,6 @@ using UUIDs
     push!(LOAD_PATH, @__DIR__)
 
     using PC_A
-    @test !isdefined(PC_A, :list)
     if VERSION >= v"1.8"
         # Check that calls inside @setup_workload are not precompiled
         m = which(Tuple{typeof(Base.vect), Vararg{T}} where T)
@@ -25,9 +24,9 @@ using UUIDs
         for mi in specializations(m)
             mi === nothing && continue
             sig = Base.unwrap_unionall(mi.specTypes)
-            @test sig.parameters[2] == PC_A.MyType
-            @test sig.parameters[3] == Vector{PC_A.MyType}
-            count += 1
+            if sig.parameters[2] == PC_A.MyType && sig.parameters[3] == Vector{PC_A.MyType}
+                count += 1
+            end
         end
         @test count == 1
         # Even one that was runtime-dispatched

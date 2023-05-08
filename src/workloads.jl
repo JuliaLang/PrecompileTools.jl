@@ -129,11 +129,11 @@ macro setup_workload(ex::Expr)
     else
         :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     end
+    # Ideally we'd like a `let` around this to prevent namespace pollution, but that seem to
+    # trigger inference & codegen in undesirable ways (see #16).
     return esc(quote
-        let
-            if $iscompiling || $PrecompileTools.verbose[]
-                $ex
-            end
+        if $iscompiling || $PrecompileTools.verbose[]
+            $ex
         end
     end)
 end
