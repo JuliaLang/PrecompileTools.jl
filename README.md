@@ -11,13 +11,29 @@ To learn how to use PrecompileTools, see the [documentation](https://JuliaLang.g
 
 ## PrecompileTools and PackageCompiler
 
-Particularly on Julia 1.9 and higher, PrecompileTools allows dramatic reduction in "time to first execution" (TTFX).
+Particularly on Julia 1.9 and higher, PrecompileTools allows dramatic reduction in "time to first execution" (TTFX) without the need for user-customization.
 In this respect, it shares goals with (and performs similarly to) [PackageCompiler](https://github.com/JuliaLang/PackageCompiler.jl).
+
 Nevertheless, the two are not identical:
 
 - only PrecompileTools can be used by *package developers* to ensure a better out-of-box experience for your users
 - only PrecompileTools allows you to update your packages without needing to rebuild Julia
 - only PackageCompiler dramatically speeds up loading time (i.e., `using ...`) for all the packages
+
+Here is a table summarizing the information.
+
+| Task | Julia 1.9 + PrecompileTools | PackageCompiler |
+|:----- | ---:| ---:|
+| Developers can reduce out-of-box TTFX for their users | ✔️ | ❌ |
+| Users can reduce TTFX for custom tasks | ✔️ | ✔️ |
+| Packages can be updated without rebuilding system image | ✔️ | ❌ |
+| Reduces time to load (TTL) | ❌ | ✔️ |
+
+The difference in time to load arises because the system image can safely skip all the code-validation checks that are necessary when loading packages.
+
+## Inspecting the package precompile files 
+
+[PkgCacheInspector](https://github.com/timholy/PkgCacheInspector.jl) provides insight about what's stored in Julia's package precompile files.
 
 ## History (origins as SnoopPrecompile)
 
