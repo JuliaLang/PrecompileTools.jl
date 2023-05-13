@@ -29,7 +29,7 @@ Here is a table summarizing the information.
 | Packages can be updated without rebuilding system image | ✔️ | ❌ |
 | Reduces time to load (TTL) | ❌ | ✔️ |
 
-The difference in time to load arises because the system image can safely skip all the code-validation checks that are necessary when loading packages.
+The difference in time to load arises because the system image can safely skip all the code-validation checks that are necessary when loading packages. Examples of the reduction in time to first execution and time to load can be found in the [Julia 1.9 highlights blog post](https://julialang.org/blog/2023/04/julia-1.9-highlights/#caching_of_native_code).
 
 ## Inspecting the package precompile files 
 
