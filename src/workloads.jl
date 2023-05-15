@@ -7,6 +7,23 @@ function workload_enabled(mod::Module)
     end
 end
 
+function throw_workload_error(mod::Module)
+    try
+        load_preference(mod, "throw_precompile_workload_error", false)
+    catch
+        false
+    end
+end
+
+function show_precompile_errors(mod::Module)
+    if isdefined(mod, :__PrecompileTools_setup_workload_error) && mod.__PrecompileTools_setup_workload_error !== nothing
+        @error "An error occurred while precompiling $mod with PrecompileTools.@setup_workload" exception=mod.__PrecompileTools_setup_workload_error
+    end
+    if isdefined(mod, :__PrecompileTools_compile_workload_error) && mod.__PrecompileTools_compile_workload_error !== nothing
+        @error "An error occurred while precompiling $mod with PrecompileTools.@compile_workload" exception=mod.__PrecompileTools_compile_workload_error
+    end
+end
+
 """
     check_edges(node)
 
@@ -67,6 +84,7 @@ macro compile_workload(ex::Expr)
     else
         :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     end
+    local throw_error = :($PrecompileTools.throw_workload_error(@__MODULE__))
     if have_force_compile
         ex = quote
             begin
@@ -95,8 +113,22 @@ macro compile_workload(ex::Expr)
         end
     end
     return esc(quote
-        if $iscompiling || $PrecompileTools.verbose[]
-            $ex
+        const __PrecompileTools_setup_workload_error = if $iscompiling || $PrecompileTools.verbose[]
+            try
+                $ex
+                 nothing
+            catch err
+                if $throw_error
+                    throw(err)
+                else
+                    bt = catch_backtrace()
+                    @error """
+                    An error occurred while precompiling $(@__MODULE__) during `PrecompileTools.@compile_workload`.
+                    Please resolve the errors and run `touch(pathof($(@__MODULE__))); Pkg.precompile(\"$(@__MODULE__)\")`."
+                    """ exception=(err,bt)
+                    err,bt
+                end
+            end
         end
     end)
 end
@@ -129,11 +161,26 @@ macro setup_workload(ex::Expr)
     else
         :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     end
+    local throw_error = :($PrecompileTools.throw_workload_error(@__MODULE__))
     # Ideally we'd like a `let` around this to prevent namespace pollution, but that seem to
     # trigger inference & codegen in undesirable ways (see #16).
     return esc(quote
-        if $iscompiling || $PrecompileTools.verbose[]
-            $ex
+        const __PrecompileTools_setup_workload_error = if $iscompiling || $PrecompileTools.verbose[]
+            try
+                $ex
+                 nothing
+            catch err
+                if $throw_error
+                    throw(err)
+                else
+                    bt = catch_backtrace()
+                    @error """
+                    An error occurred while precompiling $(@__MODULE__) during `PrecompileTools.@setup_workload`.
+                    Please resolve the errors and run `touch(pathof($(@__MODULE__))); Pkg.precompile(\"$(@__MODULE__)\")`."
+                    """ exception=(err,bt)
+                    err, bt
+                end
+            end
         end
     end)
 end
