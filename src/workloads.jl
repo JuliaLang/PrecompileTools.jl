@@ -126,7 +126,7 @@ macro compile_workload(ex::Expr)
                     An error occurred while precompiling $(@__MODULE__) during `PrecompileTools.@compile_workload`.
                     Please resolve the errors and run `touch(pathof($(@__MODULE__))); Pkg.precompile(\"$(@__MODULE__)\")`."
                     """ exception=(err,bt)
-                    err,bt
+                    err
                 end
             end
         end
@@ -178,7 +178,7 @@ macro setup_workload(ex::Expr)
                     An error occurred while precompiling $(@__MODULE__) during `PrecompileTools.@setup_workload`.
                     Please resolve the errors and run `touch(pathof($(@__MODULE__))); Pkg.precompile(\"$(@__MODULE__)\")`."
                     """ exception=(err,bt)
-                    err, bt
+                    err
                 end
             end
         end
