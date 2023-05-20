@@ -113,7 +113,7 @@ macro compile_workload(ex::Expr)
         end
     end
     return esc(quote
-        const __PrecompileTools_setup_workload_error = if $iscompiling || $PrecompileTools.verbose[]
+        __PrecompileTools_setup_workload_error = if $iscompiling || $PrecompileTools.verbose[]
             try
                 $ex
                  nothing
