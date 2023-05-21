@@ -70,7 +70,7 @@ macro compile_workload(ex::Expr)
     if have_force_compile
         ex = quote
             begin
-                Base.Experimental.@force_compile
+                $Base.Experimental.@force_compile
                 $ex
             end
         end
@@ -83,15 +83,15 @@ macro compile_workload(ex::Expr)
     end
     if have_inference_tracking
         ex = quote
-            Core.Compiler.Timings.reset_timings()
-            Core.Compiler.__set_measure_typeinf(true)
+            $Core.Compiler.Timings.reset_timings()
+            $Core.Compiler.__set_measure_typeinf(true)
             try
                 $ex
             finally
-                Core.Compiler.__set_measure_typeinf(false)
-                Core.Compiler.Timings.close_current_timer()
+                $Core.Compiler.__set_measure_typeinf(false)
+                $Core.Compiler.Timings.close_current_timer()
             end
-            $PrecompileTools.precompile_roots(Core.Compiler.Timings._timings[1].children)
+            $PrecompileTools.precompile_roots($Core.Compiler.Timings._timings[1].children)
         end
     end
     return esc(quote
