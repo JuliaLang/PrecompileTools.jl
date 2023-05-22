@@ -118,7 +118,7 @@ macro compile_workload(ex::Expr)
                 $ex
                  nothing
             catch err
-                if $throw_error
+                if $throw_error || err isa UndefVarError
                     throw(err)
                 else
                     bt = catch_backtrace()
@@ -170,7 +170,7 @@ macro setup_workload(ex::Expr)
                 $ex
                  nothing
             catch err
-                if $throw_error
+                if $throw_error || err isa UndefVarError
                     throw(err)
                 else
                     bt = catch_backtrace()
