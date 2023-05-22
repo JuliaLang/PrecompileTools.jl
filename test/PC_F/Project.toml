@@ -1,0 +1,7 @@
+name = "PC_F"
+uuid = "84e86b7e-6e80-4b10-9617-7cfc0028c0f3"
+authors = ["Mark Kittisopikul <markkitt@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
