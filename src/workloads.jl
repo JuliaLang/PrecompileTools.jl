@@ -71,14 +71,14 @@ macro compile_workload(ex::Expr)
         ex = quote
             begin
                 Base.Experimental.@force_compile
-                $ex
+                $(esc(ex))
             end
         end
     else
         # Use the hack on earlier Julia versions that blocks the interpreter
         ex = quote
             while false end
-            $ex
+            $(esc(ex))
         end
     end
     if have_inference_tracking
@@ -94,11 +94,11 @@ macro compile_workload(ex::Expr)
             $PrecompileTools.precompile_roots(Core.Compiler.Timings._timings[1].children)
         end
     end
-    return esc(quote
+    return quote
         if $iscompiling || $PrecompileTools.verbose[]
             $ex
         end
-    end)
+    end
 end
 
 """
@@ -131,9 +131,9 @@ macro setup_workload(ex::Expr)
     end
     # Ideally we'd like a `let` around this to prevent namespace pollution, but that seem to
     # trigger inference & codegen in undesirable ways (see #16).
-    return esc(quote
+    return quote
         if $iscompiling || $PrecompileTools.verbose[]
-            $ex
+            $(esc(ex))
         end
-    end)
+    end
 end
