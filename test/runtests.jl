@@ -65,6 +65,7 @@ using UUIDs
 
         projfile = Base.active_project()
         Pkg.activate("PC_D")
+        Pkg.instantiate()
         using PC_D
 
         PrecompileTools.Preferences.set_preferences!(PC_D, "precompile_workload" => false)
