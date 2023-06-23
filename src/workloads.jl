@@ -1,7 +1,11 @@
 
 function workload_enabled(mod::Module)
     try
-        load_preference(mod, "precompile_workload", true)
+        if load_preference(@__MODULE__, "precompile_workloads", true)
+            return load_preference(mod, "precompile_workload", true)
+        else
+            return false
+        end
     catch
         true
     end

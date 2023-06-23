@@ -250,8 +250,15 @@ using MyPackage, Preferences
 set_preferences!(MyPackage, "precompile_workload" => false; force=true)
 ```
 
+This will write the following to LocalPreferences.toml alongside your active environment Project.toml
+
+```
+[MyPackage]
+precompile_workload = false
+```
+
 After restarting julia, the `@compile_workload` and `@setup_workload` workloads will be disabled (locally) for `MyPackage`.
-You can also specify additional packages (e.g., dependencies of `MyPackage`) if you're co-developing a suite of packages.
+You can also specify additional packages (e.g., dependencies of `MyPackage`) if you're co-developing a suite of packages.  Simply run `set_preferences!` for the additional packages, or edit LocalPreferences.toml directly.
 
 !!! note
     Changing `precompile_workload` will result in a one-time recompilation of all packages that depend on the package(s) from the current environment.
@@ -259,6 +266,15 @@ You can also specify additional packages (e.g., dependencies of `MyPackage`) if 
     precompilation will be skipped while you're actively developing the project, but not if you use the package
     from an external environment. This will also keep the `precompile_workload` setting independent and avoid needless recompilation
     of large environments.
+
+Finally, it is possible to fully disable PrecompileTools.jl for all packages with 
+
+```julia
+using PrecompileTools, Preferences
+set_preferences!(PrecompileTools, "precompile_workloads" => false; force=true)
+```
+
+This can be helpful to reduce the system image size generated when using PackageCompiler.jl by only compiling calls made in a precompilation script.  
 
 ## Seeing what got precompiled
 
