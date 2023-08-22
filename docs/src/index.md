@@ -15,6 +15,9 @@ test data using functions that you don't need to precompile in your package.)
 Finally, `PrecompileTools` includes `@recompile_invalidations` to mitigate the undesirable consequences of *invalidations*.
 These different tools are demonstrated below.
 
+!!! note
+    There have been cases where precompilation led to performance regressions in packages (see for example [[1](https://github.com/JuliaLang/julia/issues/50749),[2](https://github.com/JuliaLang/julia/pull/50766),[3](https://github.com/JuliaLang/julia/issues/35972)]). While fixes have been released, some problems persist in older Julia versions and new issues might also slow down runtime after precompilation. Hence, it's advised to test packages for performance regressions in all supported Julia versions when introducing precompilation directives.
+
 ## Tutorial: forcing precompilation with workloads
 
 No matter whether you're a package developer or a user looking to make your own workloads start faster,
