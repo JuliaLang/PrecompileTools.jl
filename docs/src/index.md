@@ -15,6 +15,9 @@ test data using functions that you don't need to precompile in your package.)
 Finally, `PrecompileTools` includes `@recompile_invalidations` to mitigate the undesirable consequences of *invalidations*.
 These different tools are demonstrated below.
 
+!!! note
+    The latency reductions from PrecompileTools are maximally effective for Julia versions 1.9 and higher, and intermediate for Julia 1.8. Julia versions 1.7 and earlier may see some limited benefit as well, but have also occasionally been found to suffer from [precompilation-induced runtime performance regressions](https://github.com/JuliaLang/julia/issues/35972). If you wish, you can disable precompilation on older Julia versions by wrapping precompilation statements (see below) with `if Base.VERSION >= v"1.8" ... end`. On older Julia versions, you may wish to test packages for performance regressions when introducing precompilation directives.
+
 ## Tutorial: forcing precompilation with workloads
 
 No matter whether you're a package developer or a user looking to make your own workloads start faster,
