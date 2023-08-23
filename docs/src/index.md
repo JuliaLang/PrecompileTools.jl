@@ -4,7 +4,7 @@
 
 `PrecompileTools` is designed to help reduce delay on first usage of Julia code.
 It can force *precompilation* of specific workloads; particularly with Julia 1.9 and higher,
-the precompiled code can be saved to disk, so that it doesn't need to be compiled freshly in each Julia session.
+the precompiled code is automatically saved to disk, so that it doesn't need to be compiled freshly in each Julia session.
 You can use `PrecompileTools` as a package developer, to reduce the latency experienced by users of your package for "typical" workloads;
 you can also use `PrecompileTools` as a user, creating custom "Startup" package(s) that precompile workloads important for your work.
 
