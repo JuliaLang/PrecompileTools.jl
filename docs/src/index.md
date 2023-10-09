@@ -27,7 +27,7 @@ Here's an illustration of how you might use `@compile_workload` and `@setup_work
 ```julia
 module MyPackage
 
-using PrecompileTools    # this is a small dependency
+using PrecompileTools: @setup_workload, @compile_workload    # this is a small dependency
 
 struct MyType
     x::Int
