@@ -6,9 +6,9 @@ DocMeta.setdocmeta!(PrecompileTools, :DocTestSetup, :(using PrecompileTools); re
 makedocs(;
     modules=[PrecompileTools],
     authors="Tim Holy <tim.holy@gmail.com>, t-bltg <tf.bltg@gmail.com>, and contributors",
-    repo="https://github.com/JuliaLang/PrecompileTools.jl/blob/{commit}{path}#{line}",
     sitename="PrecompileTools.jl",
     format=Documenter.HTML(;
+        repolink="https://github.com/JuliaLang/PrecompileTools.j/",
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://JuliaLang.github.io/PrecompileTools.jl",
         edit_link="main",
