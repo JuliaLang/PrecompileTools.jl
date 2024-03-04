@@ -8,17 +8,21 @@ Recompile any invalidations that occur within the given expression. This is gene
 by users in creating "Startup" packages to ensure that the code compiled by package authors is not invalidated.
 """
 macro recompile_invalidations(expr)
-    list = gensym(:list)
-    Expr(:toplevel,
-        :($list = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)),
-        Expr(:tryfinally,
-            esc(expr),
-            :(ccall(:jl_debug_method_invalidation, Any, (Cint,), 0))
-        ),
-        :(if ccall(:jl_generating_output, Cint, ()) == 1
-            foreach($PrecompileTools.precompile_mi, $PrecompileTools.invalidation_leaves($list))
-          end)
-    )
+    # use QuoteNode instead of Expr(:quote) so that $ is not permitted as usual (instead of having this macro work like `@eval`)
+    return :(recompile_invalidations($__module__, $(QuoteNode(expr))))
+end
+
+function recompile_invalidations(__module__::Module, @nospecialize expr)
+    list = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)
+    try
+        eval(__module__, expr)
+    finally
+        ccall(:jl_debug_method_invalidation, Any, (Cint,), 0)
+    end
+    if ccall(:jl_generating_output, Cint, ()) == 1
+        foreach(precompile_mi, invalidation_leaves(list))
+    end
+    nothing
 end
 
 function invalidation_leaves(invlist)
