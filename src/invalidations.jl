@@ -8,14 +8,14 @@ Recompile any invalidations that occur within the given expression. This is gene
 by users in creating "Startup" packages to ensure that the code compiled by package authors is not invalidated.
 """
 macro recompile_invalidations(expr)
-    # use QuoteNode instead of Expr(:quote) so that $ is not permitted as usual (instead of having this macro work like `@eval`)
+    # use QuoteNode instead of esc(Expr(:quote)) so that $ is not permitted as usual (instead of having this macro work like `@eval`)
     return :(recompile_invalidations($__module__, $(QuoteNode(expr))))
 end
 
 function recompile_invalidations(__module__::Module, @nospecialize expr)
     list = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)
     try
-        eval(__module__, expr)
+        Core.eval(__module__, expr)
     finally
         ccall(:jl_debug_method_invalidation, Any, (Cint,), 0)
     end
