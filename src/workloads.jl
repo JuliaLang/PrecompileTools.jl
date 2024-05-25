@@ -1,6 +1,11 @@
 
 function workload_enabled(mod::Module)
-    load_preference(@__MODULE__, "precompile_workloads", true) && load_preference(mod, "precompile_workload", true)
+    try
+        load_preference(@__MODULE__, "precompile_workloads", true) && load_preference(mod, "precompile_workload", true)
+    catch
+        @warn "Preference for the module $mod can't be loaded. passing by default value (true)"
+        true
+    end
 end
 
 """
