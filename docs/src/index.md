@@ -36,7 +36,7 @@ struct OtherType
     str::String
 end
 
-@setup_workload begin
+@setup_workload let
     # Putting some things in `@setup_workload` instead of `@compile_workload` can reduce the size of the
     # precompile file and potentially make loading faster.
     list = [OtherType("hello"), OtherType("world!")]

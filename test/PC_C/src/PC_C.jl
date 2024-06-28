@@ -22,7 +22,7 @@ module RB
 end
 using .RB
 
-@setup_workload begin
+@setup_workload let
     struct Foo end
     @compile_workload begin
         @recipe f(::Foo) = nothing

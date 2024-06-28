@@ -10,7 +10,7 @@ g(list) = [f(x) for x in list]
 
 using PrecompileTools
 
-@setup_workload begin
+@setup_workload let
     list = Any[1, "hi"]
     @compile_workload begin
         for item in list

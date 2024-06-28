@@ -17,7 +17,7 @@ function call_findfirst(x, list)
     return findfirst(==(inferencebarrier(x)), inferencebarrier(list))
 end
 
-@setup_workload begin
+@setup_workload let
     list = [MyType(1), MyType(2), MyType(3)]
     @compile_workload begin
         call_findfirst(MyType(2), list)

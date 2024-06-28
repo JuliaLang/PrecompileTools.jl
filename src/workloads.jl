@@ -106,7 +106,7 @@ macro compile_workload(ex::Expr)
 end
 
 """
-    @setup_workload begin
+    @setup_workload let
         vars = ...
         ⋮
     end
@@ -114,7 +114,7 @@ end
 Run the code block only during package precompilation. `@setup_workload` is often used in combination
 with [`@compile_workload`](@ref), for example:
 
-    @setup_workload begin
+    @setup_workload let
         vars = ...
         @compile_workload begin
             y = f(vars...)
