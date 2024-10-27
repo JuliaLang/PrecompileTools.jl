@@ -71,8 +71,8 @@ using the same workload you put inside the `@compile_workload` block.
 
 If you're happy with the results, you're done! If you want deeper verification of whether it worked as
 expected, or if you suspect problems, the [SnoopCompile package](https://github.com/timholy/SnoopCompile.jl) provides diagnostic tools.
-Potential sources of trouble include invalidation (diagnosed with `SnoopCompileCore.@snoopr` and related tools)
-and omission of intended calls from inside the `@compile_workload` block (diagnosed with `SnoopCompileCore.@snoopi_deep` and related tools).
+Potential sources of trouble include invalidation (diagnosed with `SnoopCompileCore.@snoop_invalidations` and related tools)
+and omission of intended calls from inside the `@compile_workload` block (diagnosed with `SnoopCompileCore.@snoop_inference` and related tools).
 
 !!! note
     `@compile_workload` works by monitoring type-inference. If the code was already inferred
@@ -81,7 +81,7 @@ and omission of intended calls from inside the `@compile_workload` block (diagno
 
     You can use multiple `@compile_workload` blocks if you need to interleave `@setup_workload` code with
     code that you want precompiled.
-    You can use `@snoopi_deep` to check for any (re)inference when you use the code in your package.
+    You can use `@snoop_inference` to check for any (re)inference when you use the code in your package.
     To fix any specific problems, you can combine `@compile_workload` with manual `precompile` directives.
 
 ## Tutorial: local "Startup" packages
@@ -226,7 +226,7 @@ In that case, your best option is to fall back on Julia's own `precompile` funct
 However, as explained in [How PrecompileTools works](@ref), there are some differences between `precompile` and `@compile_workload`;
 most likely, you may need multiple `precompile` directives.
 Analysis with [SnoopCompile](https://github.com/timholy/SnoopCompile.jl) may be required to obtain the results you want;
-in particular, combining `@snoopi_deep` and `parcel` will allow you to generate a set of `precompile` directives that can be `include`d in your module definition.
+in particular, combining `@snoop_inference` and `parcel` will allow you to generate a set of `precompile` directives that can be `include`d in your module definition.
 
 Be aware that `precompile` directives are more specific to the Julia version, CPU (integer width), and OS than running a workload.
 
