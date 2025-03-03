@@ -175,9 +175,9 @@ using UUIDs
                     end
 
                     @eval using $(Symbol(pkg3))
-                    mod3 = getglobal(@__MODULE__, Symbol(pkg3))
-                    mod2 = getglobal(mod3, Symbol(pkg2))
-                    mod1 = getglobal(mod2, Symbol(pkg1))
+                    mod3 = Base.@invokelatest getglobal(@__MODULE__, Symbol(pkg3))
+                    mod2 = Base.@invokelatest getglobal(mod3, Symbol(pkg2))
+                    mod1 = Base.@invokelatest getglobal(mod2, Symbol(pkg1))
                     m = only(methods(mod1.call_nbits))
                     mi = first(specializations(m))
                     wc = Base.get_world_counter()
