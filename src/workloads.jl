@@ -27,13 +27,13 @@ end
 """
     @compile_workload f(args...)
 
-`precompile` (and save in the compile_workload file) any method-calls that occur inside the expression. All calls (direct or indirect) inside a
+`precompile` (and save in the `compile_workload` file) any method-calls that occur inside the expression. All calls (direct or indirect) inside a
 `@compile_workload` block will be cached.
 
 `@compile_workload` has three key features:
 
 1. code inside runs only when the package is being precompiled (i.e., a `*.ji`
-   precompile compile_workload file is being written)
+   precompile `compile_workload` file is being written)
 2. the interpreter is disabled, ensuring your calls will be compiled
 3. both direct and indirect callees will be precompiled, even for methods defined in other packages
    and even for runtime-dispatched callees (requires Julia 1.8 and above).
