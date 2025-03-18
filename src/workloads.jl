@@ -13,15 +13,13 @@ function workload_enabled(mod::Module)
 end
 
 @noinline function precompile_newly_inferred(cis)
-        ccall(:jl_set_newly_inferred, Cvoid, (Any,), nothing) # ensure we drop internally references to both newly_inferred arrays so that it is safe to access them here
-        for child in cis # set the must-precompile bit on all new code
-            precompile_mi((child::Base.CodeInstance).def)
-        end
-        append!(Base.newly_inferred, cis) # request the new code be included in the serialized file
-        empty!(newly_inferred)
-        nothing
-end
-    return cis
+    ccall(:jl_set_newly_inferred, Cvoid, (Any,), nothing) # ensure we drop internally references to both newly_inferred arrays so that it is safe to access them here
+    for child in cis # set the must-precompile bit on all new code
+        precompile_mi((child::Base.CodeInstance).def)
+    end
+    append!(Base.newly_inferred, cis) # request the new code be included in the serialized file
+    empty!(cis)
+    nothing
 end
 
 """
