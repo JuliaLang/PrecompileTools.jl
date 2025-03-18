@@ -22,7 +22,7 @@ using Base: specializations
     for mi in specializations(m)
         mi === nothing && continue
         sig = Base.unwrap_unionall(mi.specTypes)
-        if sig.parameters[2] == PC_A.MyType && sig.parameters[3] == Vector{PC_A.MyType}
+        if sig == Tuple{typeof(PC_A.call_findfirst), PC_A.MyType, Vector{PC_A.MyType}}
             count += 1
         end
     end
