@@ -1,3 +1,4 @@
+const newly_inferred = Core.CodeInstance[]
 
 function workload_enabled(mod::Module)
     try
@@ -11,30 +12,12 @@ function workload_enabled(mod::Module)
     end
 end
 
-"""
-    check_edges(node)
-
-Recursively ensure that all callees of `node` are precompiled. This is (rarely) necessary
-because sometimes there is no backedge from callee to caller (xref https://github.com/JuliaLang/julia/issues/49617),
-and `staticdata.c` relies on the backedge to trace back to a MethodInstance that is tagged `mi.precompiled`.
-"""
-function check_edges(node)
-    parentmi = node.mi_info.mi
-    for child in node.children
-        childmi = child.mi_info.mi
-        if !(isdefined(childmi, :backedges) && parentmi ∈ childmi.backedges)
-            precompile_mi(childmi)
-        end
-        check_edges(child)
+function precompile_newly_inferred(cis)
+    while !isempty(cis)
+        ci = pop!(cis)
+        precompile_mi(ci.def)
     end
-end
-
-function precompile_roots(roots)
-    @assert have_inference_tracking
-    for child in roots
-        precompile_mi(child.mi_info.mi)
-        check_edges(child)
-    end
+    return cis
 end
 
 """
@@ -66,37 +49,21 @@ end
         - indirect runtime-dispatched calls to such methods.
 """
 macro compile_workload(ex::Expr)
-    local iscompiling = if Base.VERSION < v"1.6"
-        :(ccall(:jl_generating_output, Cint, ()) == 1)
-    else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
-    end
-    if have_force_compile
-        ex = quote
-            begin
-                Base.Experimental.@force_compile
-                $(esc(ex))
-            end
-        end
-    else
-        # Use the hack on earlier Julia versions that blocks the interpreter
-        ex = quote
-            while false end
+    local iscompiling = :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
+    ex = quote
+        begin
+            Base.Experimental.@force_compile
             $(esc(ex))
         end
     end
-    if have_inference_tracking
-        ex = quote
-            Core.Compiler.Timings.reset_timings()
-            Core.Compiler.__set_measure_typeinf(true)
-            try
-                $ex
-            finally
-                Core.Compiler.__set_measure_typeinf(false)
-                Core.Compiler.Timings.close_current_timer()
-            end
-            $PrecompileTools.precompile_roots(Core.Compiler.Timings._timings[1].children)
+    ex = quote
+        ccall(:jl_set_newly_inferred, Cvoid, (Any,), newly_inferred)
+        try
+            $ex
+        finally
+            ccall(:jl_set_newly_inferred, Cvoid, (Any,), nothing)
         end
+        $PrecompileTools.precompile_newly_inferred(newly_inferred)
     end
     return quote
         if $iscompiling || $PrecompileTools.verbose[]
@@ -128,11 +95,7 @@ runtime dispatches (though they will be precompiled anyway if the runtime-callee
 to your package).
 """
 macro setup_workload(ex::Expr)
-    local iscompiling = if Base.VERSION < v"1.6"
-        :(ccall(:jl_generating_output, Cint, ()) == 1)
-    else
-        :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
-    end
+    local iscompiling = :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
     # Ideally we'd like a `let` around this to prevent namespace pollution, but that seem to
     # trigger inference & codegen in undesirable ways (see #16).
     return quote
