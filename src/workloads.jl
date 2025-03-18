@@ -1,12 +1,9 @@
 
 function workload_enabled(mod::Module)
     try
-        if load_preference(@__MODULE__, "precompile_workloads", true)
-            return load_preference(mod, "precompile_workload", true)
-        else
-            return false
-        end
+        load_preference(@__MODULE__, "precompile_workloads", true) && load_preference(mod, "precompile_workload", true)
     catch
+        @warn "Preference for the module $mod can't be loaded. passing by default value (true)"
         true
     end
 end
@@ -81,7 +78,8 @@ macro compile_workload(ex::Expr)
     else
         # Use the hack on earlier Julia versions that blocks the interpreter
         ex = quote
-            while false end
+            while false
+            end
             $(esc(ex))
         end
     end
