@@ -1,4 +1,4 @@
-const newly_inferred = Core.CodeInstance[]
+const newly_inferred = Core.CodeInstance[]   # only used to support verbose[]
 
 function workload_enabled(mod::Module)
     try
@@ -12,16 +12,23 @@ function workload_enabled(mod::Module)
     end
 end
 
-cache_newly_inferred() = ccall(:jl_set_newly_inferred, Cvoid, (Any,), newly_inferred)
-
-@noinline function precompile_newly_inferred()
-    ccall(:jl_set_newly_inferred, Cvoid, (Any,), nothing) # ensure we drop internally references to both newly_inferred arrays so that it is safe to access them here
-    for child in newly_inferred # set the must-precompile bit on all new code
-        precompile_mi((child::Base.CodeInstance).def)
+function tag_newly_inferred_enable()
+    ccall(:jl_tag_newly_inferred_enable, Cvoid, ())
+    if !Base.generating_output()   # for verbose[]
+        ccall(:jl_set_newly_inferred, Cvoid, (Any,), newly_inferred)
     end
-    append!(Base.newly_inferred, newly_inferred) # request the new code be included in the serialized file
-    empty!(newly_inferred)
-    nothing
+end
+function tag_newly_inferred_disable()
+    ccall(:jl_tag_newly_inferred_disable, Cvoid, ())
+    if !Base.generating_output()   # for verbose[]
+        ccall(:jl_set_newly_inferred, Cvoid, (Any,), nothing)
+    end
+    if verbose[]
+        for ci in newly_inferred
+            println(ci.def)
+        end
+    end
+    return nothing
 end
 
 """
@@ -61,11 +68,11 @@ macro compile_workload(ex::Expr)
         end
     end
     ex = quote
-        $PrecompileTools.cache_newly_inferred()
+        $PrecompileTools.tag_newly_inferred_enable()
         try
             $ex
         finally
-            $PrecompileTools.precompile_newly_inferred()
+            $PrecompileTools.tag_newly_inferred_disable()
         end
     end
     return quote
