@@ -6,11 +6,7 @@ struct MyType
     x::Int
 end
 
-if isdefined(Base, :inferencebarrier)
-    inferencebarrier(@nospecialize(arg)) = Base.inferencebarrier(arg)
-else
-    inferencebarrier(@nospecialize(arg)) = Ref{Any}(arg)[]
-end
+inferencebarrier(@nospecialize(arg)) = Base.inferencebarrier(arg)
 
 function call_findfirst(x, list)
     # call a method defined in Base by runtime dispatch
