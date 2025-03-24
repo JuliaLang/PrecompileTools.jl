@@ -1,14 +1,14 @@
 name = "PrecompileTools"
 uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 authors = ["Tim Holy <tim.holy@gmail.com>", "t-bltg <tf.bltg@gmail.com>", "and contributors"]
-version = "1.2.1"
+version = "1.3.0"
 
 [deps]
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 
 [compat]
 Preferences = "1"
-julia = "1"
+julia = "1.12"
 
 [extras]
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
