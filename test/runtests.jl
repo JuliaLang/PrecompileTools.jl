@@ -107,6 +107,9 @@ using Base: specializations
     invs = Any[Tuple{}, "insert_backedges_callee", 55, Any[m], mis[2], "verify_methods", 55]
     @test PrecompileTools.invalidation_leaves(invs) == Set([mis[2]])
 
+    # Coverage isn't on during package precompilation, so let's test a few things here
+    PrecompileTools.precompile_mi(mis[1])
+
     # Add a real invalidation & repair test
     cproj = Base.active_project()
     mktempdir() do dir
