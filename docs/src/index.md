@@ -66,10 +66,6 @@ that were called by runtime dispatch. Thus, here you could have gotten the same 
 The key advantage of `@compile_workload` is that it works even if the functions you're calling
 have runtime dispatch.
 
-!!! warning
-    If you want to manually precompile methods defined in *other* packages, you must ensure that the corresponding calls are
-    made in a method belonging to `MyPackage`, otherwise these calls will not be captured during precompilation.
-
 Once you set up a block using `PrecompileTools`, try your package and see if it reduces the time to first execution,
 using the same workload you put inside the `@compile_workload` block.
 
