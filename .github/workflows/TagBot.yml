@@ -12,11 +12,11 @@ permissions:
   checks: read
   contents: write
   deployments: read
-  issues: read
+  issues: write
   discussions: read
   packages: read
   pages: read
-  pull-requests: read
+  pull-requests: write
   repository-projects: read
   security-events: read
   statuses: read
@@ -25,6 +25,14 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
     runs-on: ubuntu-latest
     steps:
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DOCUMENTER_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
+      - name: Test SSH connection
+        run: ssh -vT git@github.com
       - uses: JuliaRegistries/TagBot@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
