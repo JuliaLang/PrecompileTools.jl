@@ -12,6 +12,8 @@ function workload_enabled(mod::Module)
     end
 end
 
+@noinline is_generating_output() = ccall(:jl_generating_output, Cint, ()) == 1
+
 function tag_newly_inferred_enable()
     ccall(:jl_tag_newly_inferred_enable, Cvoid, ())
     if !Base.generating_output()   # for verbose[]
@@ -60,10 +62,10 @@ end
         - indirect runtime-dispatched calls to such methods.
 """
 macro compile_workload(ex::Expr)
-    local iscompiling = :((ccall(:jl_generating_output, Cint, ()) == 1 && $PrecompileTools.workload_enabled(@__MODULE__)))
+    local iscompiling = :($PrecompileTools.is_generating_output() && $PrecompileTools.workload_enabled(@__MODULE__))
     ex = quote
         begin
-            Base.Experimental.@force_compile
+            Core.@latestworld  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
             $(esc(ex))
         end
     end
@@ -110,7 +112,9 @@ macro setup_workload(ex::Expr)
     # trigger inference & codegen in undesirable ways (see #16).
     return quote
         if $iscompiling || $PrecompileTools.verbose[]
-            $(esc(ex))
+            let
+                $(esc(ex))
+            end
         end
     end
 end

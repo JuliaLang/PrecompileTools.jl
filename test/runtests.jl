@@ -2,6 +2,7 @@ using PrecompileTools
 using Test
 using Pkg
 using UUIDs
+using InteractiveUtils
 using Base: specializations
 
 @testset "PrecompileTools.jl" begin
@@ -81,6 +82,24 @@ using Base: specializations
         @test occursin("$(modscope)f(::String)", str)
     end
     PrecompileTools.verbose[] = oldval
+
+    using MSort
+    using AliasTables
+    x = rand(64)
+    pipe = Pipe()
+    oldstderr = stderr
+    redirect_stderr(pipe)
+    @trace_compile begin
+        MSort.quicksort(x)
+        at = AliasTable([1.0, 2.0])
+        rand(at)
+    end
+    close(pipe.in)
+    redirect_stderr(oldstderr)
+    str = read(pipe.out, String)
+    @test isempty(str)
+
+    ## @recompile_invalidations
 
     # Mimic the format written to `_jl_debug_method_invalidation`
     # As a source of MethodInstances, `getproperty` has lots
