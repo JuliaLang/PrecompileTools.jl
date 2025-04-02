@@ -13,19 +13,21 @@ macro recompile_invalidations(expr)
 end
 
 function recompile_invalidations(__module__::Module, @nospecialize expr)
-    list = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)
+    listi = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)
+    liste = Base.StaticData.debug_method_invalidation(true)
     try
         Core.eval(__module__, expr)
     finally
         ccall(:jl_debug_method_invalidation, Any, (Cint,), 0)
+        Base.StaticData.debug_method_invalidation(false)
     end
     if ccall(:jl_generating_output, Cint, ()) == 1
-        foreach(precompile_mi, invalidation_leaves(list))
+        foreach(precompile_mi, invalidation_leaves(listi, liste))
     end
     nothing
 end
 
-function invalidation_leaves(invlist)
+function invalidation_leaves(listi, liste)
     umis = Set{Core.MethodInstance}()
     # `queued` is a queue of length 0 or 1 of invalidated MethodInstances.
     # We wait to read the `depth` to find out if it's a leaf.
@@ -37,18 +39,19 @@ function invalidation_leaves(invlist)
         queued, depth = item, nextdepth
     end
 
-    i, ilast = firstindex(invlist), lastindex(invlist)
+    # Process method insertion/deletion events
+    i, ilast = firstindex(listi), lastindex(listi)
     while i <= ilast
-        item = invlist[i]
+        item = listi[i]
         if isa(item, Core.MethodInstance)
-            if i < lastindex(invlist)
-                nextitem = invlist[i+1]
+            if i < lastindex(listi)
+                nextitem = listi[i+1]
                 if nextitem == "invalidate_mt_cache"
                     cachequeued(nothing, 0)
                     i += 2
                     continue
                 end
-                if nextitem ∈ ("jl_method_table_disable", "jl_method_table_insert", "verify_methods")
+                if nextitem ∈ ("jl_method_table_disable", "jl_method_table_insert")
                     cachequeued(nothing, 0)
                     push!(umis, item)
                 end
@@ -65,5 +68,24 @@ function invalidation_leaves(invlist)
         end
         i += 1
     end
+
+    # Process edge-validation events
+    i, ilast = firstindex(liste), lastindex(liste)
+    while i <= ilast
+        tag = liste[i + 1]   # the tag is always second
+        if tag == "method_globalref"
+            push!(umis, Core.Compiler.get_ci_mi(liste[i + 2]))
+            i += 4
+        elseif tag == "insert_backedges_callee"
+            push!(umis, Core.Compiler.get_ci_mi(liste[i + 2]))
+            i += 4
+        elseif tag == "verify_methods"
+            push!(umis, Core.Compiler.get_ci_mi(liste[i]))
+            i += 3
+        else
+            error("Unknown tag found in invalidation list: ", tag)
+        end
+    end
+
     return umis
 end
