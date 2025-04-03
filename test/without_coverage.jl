@@ -14,9 +14,11 @@ using InteractiveUtils
     oldstderr = stderr
     redirect_stderr(pipe)
     @trace_compile begin
-        MSort.quicksort(x)
-        at = AliasTable([1.0, 2.0])
-        rand(at)
+        @eval begin
+            MSort.quicksort($x)
+            at = AliasTable([1.0, 2.0])
+            rand(at)
+        end
     end
     close(pipe.in)
     redirect_stderr(oldstderr)
