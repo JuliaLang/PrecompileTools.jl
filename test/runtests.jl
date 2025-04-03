@@ -87,6 +87,8 @@ using Base: specializations
     end
     PrecompileTools.verbose[] = oldval
 
+    ## @recompile_invalidations
+
     # Mimic the format written to `_jl_debug_method_invalidation`
     # As a source of MethodInstances, `getproperty` has lots
     m = which(getproperty, (Any, Symbol))
