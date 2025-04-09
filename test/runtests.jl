@@ -87,6 +87,17 @@ using Base: specializations
     end
     PrecompileTools.verbose[] = oldval
 
+    using NotToplevel
+    # Check that calls inside @setup_workload are not precompiled
+    m = NotToplevel.NotPrecompiled.themethod
+    have_mytype = false
+    for mi in specializations(m)
+        mi === nothing && continue
+        have_mytype |= mi.specTypes.parameters[2] === Char
+    end
+    have_mytype && @warn "Code in setup_workload block was precompiled"
+
+
     ## @recompile_invalidations
 
     # Mimic the format written to `_jl_debug_method_invalidation`
