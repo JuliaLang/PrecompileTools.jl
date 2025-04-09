@@ -90,13 +90,14 @@ using Base: specializations
     using NotToplevel
     # Check that calls inside @setup_workload are not precompiled
     m = NotToplevel.NotPrecompiled.themethod
-    have_mytype = false
+    have_char = have_float = false
     for mi in specializations(m)
         mi === nothing && continue
-        have_mytype |= mi.specTypes.parameters[2] === Char
+        have_char |= mi.specTypes.parameters[2] === Char
+        have_float |= mi.specTypes.parameters[2] === Float64
     end
-    have_mytype && @warn "Code in setup_workload block was precompiled"
-
+    @test !have_float       # not wrapped inside `@compile_workload`
+    @test_broken have_char  # is wrapped
 
     ## @recompile_invalidations
 

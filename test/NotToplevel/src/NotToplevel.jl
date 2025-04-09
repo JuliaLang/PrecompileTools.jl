@@ -5,6 +5,8 @@ using PrecompileTools: @setup_workload, @compile_workload
 
 hello(who::AbstractString) = "Hello, $who"
 
+NotPrecompiled.call_isa_bool(1.0)
+
 @setup_workload begin
     withenv() do
         @compile_workload begin
