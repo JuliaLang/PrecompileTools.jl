@@ -87,6 +87,18 @@ using Base: specializations
     end
     PrecompileTools.verbose[] = oldval
 
+    using NotToplevel
+    # Check that calls inside @setup_workload are not precompiled
+    m = NotToplevel.NotPrecompiled.themethod
+    have_char = have_float = false
+    for mi in specializations(m)
+        mi === nothing && continue
+        have_char |= mi.specTypes.parameters[2] === Char
+        have_float |= mi.specTypes.parameters[2] === Float64
+    end
+    @test !have_float       # not wrapped inside `@compile_workload`
+    @test_broken have_char  # is wrapped
+
     ## @recompile_invalidations
 
     # Mimic the format written to `_jl_debug_method_invalidation`

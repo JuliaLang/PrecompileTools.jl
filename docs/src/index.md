@@ -52,6 +52,10 @@ end
 end
 ```
 
+!!! warning
+    `@compile_workload` should go at "top level," not compiled into a function. A pattern like `withenv(...) do @compile_workload begin ... end end`,
+    where `@compile_workload` appears in the anonymous function passed to `withenv`, may defeat some of the value of PrecompileTools.
+
 When you build `MyPackage`, it will precompile the following, *including all their callees*:
 
 - `Pair(::MyPackage.MyType, ::Vector{MyPackage.OtherType})`
@@ -270,14 +274,14 @@ You can also specify additional packages (e.g., dependencies of `MyPackage`) if 
     from an external environment. This will also keep the `precompile_workload` setting independent and avoid needless recompilation
     of large environments.
 
-Finally, it is possible to fully disable PrecompileTools.jl for all packages with 
+Finally, it is possible to fully disable PrecompileTools.jl for all packages with
 
 ```julia
 using PrecompileTools, Preferences
 set_preferences!(PrecompileTools, "precompile_workloads" => false; force=true)
 ```
 
-This can be helpful to reduce the system image size generated when using PackageCompiler.jl by only compiling calls made in a precompilation script.  
+This can be helpful to reduce the system image size generated when using PackageCompiler.jl by only compiling calls made in a precompilation script.
 
 ## Seeing what got precompiled
 

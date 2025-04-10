@@ -1,0 +1,47 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.12.0-beta1"
+manifest_format = "2.0"
+project_hash = "e8122786ed34aaf26503bdeb405954ce2c258c3a"
+
+[[deps.Dates]]
+deps = ["Printf"]
+uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+version = "1.11.0"
+
+[[deps.NotPrecompiled]]
+path = "../NotPrecompiled"
+uuid = "82bf3039-9474-4881-94bd-824dbad9b14d"
+version = "0.1.0"
+
+[[deps.NotToplevel]]
+deps = ["PrecompileTools"]
+path = "."
+uuid = "3879f6fb-0a74-4dcf-89ef-07d77fe6cb90"
+version = "0.1.0"
+
+[[deps.PrecompileTools]]
+deps = ["Preferences"]
+path = "../.."
+uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+version = "1.3.1"
+
+[[deps.Preferences]]
+deps = ["TOML"]
+git-tree-sha1 = "9306f6085165d270f7e3db02af26a400d580f5c6"
+uuid = "21216c6a-2e73-6563-6e65-726566657250"
+version = "1.4.3"
+
+[[deps.Printf]]
+deps = ["Unicode"]
+uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+version = "1.11.0"
+
+[[deps.TOML]]
+deps = ["Dates"]
+uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+version = "1.0.3"
+
+[[deps.Unicode]]
+uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+version = "1.11.0"

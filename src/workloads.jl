@@ -14,6 +14,10 @@ end
 
 @noinline is_generating_output() = ccall(:jl_generating_output, Cint, ()) == 1
 
+macro latestworld_if_toplevel()
+    Expr(Symbol("latestworld-if-toplevel"))
+end
+
 function tag_newly_inferred_enable()
     ccall(:jl_tag_newly_inferred_enable, Cvoid, ())
     if !Base.generating_output()   # for verbose[]
@@ -65,7 +69,7 @@ macro compile_workload(ex::Expr)
     local iscompiling = :($PrecompileTools.is_generating_output() && $PrecompileTools.workload_enabled(@__MODULE__))
     ex = quote
         begin
-            Core.@latestworld  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
+            $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
             $(esc(ex))
         end
     end
@@ -113,6 +117,7 @@ macro setup_workload(ex::Expr)
     return quote
         if $iscompiling || $PrecompileTools.verbose[]
             let
+                $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
                 $(esc(ex))
             end
         end
