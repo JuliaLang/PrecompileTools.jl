@@ -52,6 +52,10 @@ end
 end
 ```
 
+!!! warning
+    `@compile_workload` should go at "top level," not compiled into a function. A pattern like `withenv(...) do @compile_workload begin ... end end`,
+    where `@compile_workload` appears in the anonymous function passed to `withenv`, may defeat some of the value of PrecompileTools.
+
 When you build `MyPackage`, it will precompile the following, *including all their callees*:
 
 - `Pair(::MyPackage.MyType, ::Vector{MyPackage.OtherType})`
@@ -83,10 +87,6 @@ and omission of intended calls from inside the `@compile_workload` block (diagno
     code that you want precompiled.
     You can use `@snoop_inference` to check for any (re)inference when you use the code in your package.
     To fix any specific problems, you can combine `@compile_workload` with manual `precompile` directives.
-
-!!! warning
-    `@compile_workload` should go at "top level," not compiled into a function. A pattern like `withenv(...) do @compile_workload begin ... end end`,
-    where `@compile_workload` appears in the anonymous function passed to `withenv`, may defeat some of the value of PrecompileTools.
 
 ## Tutorial: local "Startup" packages
 
