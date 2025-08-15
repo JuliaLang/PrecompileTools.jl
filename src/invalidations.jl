@@ -12,14 +12,16 @@ macro recompile_invalidations(expr)
     return :(recompile_invalidations($__module__, $(QuoteNode(expr))))
 end
 
+const ReinferUtils = isdefined(Base, :ReinferUtils) ? Base.ReinferUtils : Base.StaticData
+
 function recompile_invalidations(__module__::Module, @nospecialize expr)
     listi = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)
-    liste = Base.StaticData.debug_method_invalidation(true)
+    liste = ReinferUtils.debug_method_invalidation(true)
     try
         Core.eval(__module__, expr)
     finally
         ccall(:jl_debug_method_invalidation, Any, (Cint,), 0)
-        Base.StaticData.debug_method_invalidation(false)
+        ReinferUtils.debug_method_invalidation(false)
     end
     if ccall(:jl_generating_output, Cint, ()) == 1
         foreach(precompile_mi, invalidation_leaves(listi, liste))
