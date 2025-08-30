@@ -1,5 +1,9 @@
 const newly_inferred = Core.CodeInstance[]   # only used to support verbose[]
 
+# This dummy call ensures that `precompile_workloads` is recorded as a
+# compile-time preference for the `PrecompileTools` module.
+load_preference(@__MODULE__, "precompile_workloads", true)
+
 function workload_enabled(mod::Module)
     try
         if load_preference(@__MODULE__, "precompile_workloads", true)
