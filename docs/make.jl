@@ -8,7 +8,7 @@ makedocs(;
     authors="Tim Holy <tim.holy@gmail.com>, t-bltg <tf.bltg@gmail.com>, and contributors",
     sitename="PrecompileTools.jl",
     format=Documenter.HTML(;
-        repolink="https://github.com/JuliaLang/PrecompileTools.j/",
+        repolink="https://github.com/JuliaLang/PrecompileTools.jl/",
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://JuliaLang.github.io/PrecompileTools.jl",
         edit_link="main",
