@@ -1,5 +1,16 @@
 const newly_inferred = Core.CodeInstance[]   # only used to support verbose[]
 
+const timing_enabled = Ref{Union{Nothing,Bool}}(nothing)  # lazy lookup of PRECOMPILETOOLS_TIMING
+
+function check_timing_enabled()
+    val = timing_enabled[]
+    if val === nothing
+        val = Base.get_bool_env("PRECOMPILETOOLS_TIMING", false)
+        timing_enabled[] = val
+    end
+    return val::Bool
+end
+
 function workload_enabled(mod::Module)
     try
         if load_preference(@__MODULE__, "precompile_workloads", true)
@@ -13,6 +24,14 @@ function workload_enabled(mod::Module)
 end
 
 @noinline is_generating_output() = ccall(:jl_generating_output, Cint, ()) == 1
+
+function print_timed(t_ns::UInt64, exprstr::String)
+    ms = round(Int, t_ns / 1_000_000)
+    if occursin("\n", exprstr) # when multiline print nicely
+        exprstr = "\n" * exprstr
+    end
+    @info "$(lpad(ms, 7)) ms: $exprstr"
+end
 
 macro latestworld_if_toplevel()
     Expr(Symbol("latestworld-if-toplevel"))
@@ -35,6 +54,33 @@ function tag_newly_inferred_disable()
         end
     end
     return nothing
+end
+
+
+function wrap_with_timing(ex::Expr)
+    if ex.head === :block
+        new_args = Any[]
+        for arg in ex.args
+            if arg isa LineNumberNode
+                push!(new_args, arg)
+            else
+                exprstr = string(arg)
+                push!(new_args, quote
+                    if $PrecompileTools.check_timing_enabled()
+                        local _t0 = time_ns()
+                        $(arg)
+                        local _t1 = time_ns()
+                        $PrecompileTools.print_timed(_t1 - _t0, $(exprstr))
+                    else
+                        $(arg)
+                    end
+                end)
+            end
+        end
+        return Expr(:block, new_args...)
+    else
+        return ex
+    end
 end
 
 """
@@ -67,10 +113,11 @@ end
 """
 macro compile_workload(ex::Expr)
     local iscompiling = :($PrecompileTools.is_generating_output() && $PrecompileTools.workload_enabled(@__MODULE__))
+    timed_ex = wrap_with_timing(ex)
     ex = quote
-        begin
+        @time "@compile_workload" begin
             $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
-            $(esc(ex))
+            $(esc(timed_ex))
         end
     end
     ex = quote
