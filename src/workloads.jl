@@ -115,7 +115,7 @@ macro compile_workload(ex::Expr)
     local iscompiling = :($PrecompileTools.is_generating_output() && $PrecompileTools.workload_enabled(@__MODULE__))
     timed_ex = wrap_with_timing(ex)
     ex = quote
-        begin
+        @time "@compile_workload" begin
             $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
             $(esc(timed_ex))
         end
