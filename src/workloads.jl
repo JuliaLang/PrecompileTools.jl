@@ -1,5 +1,20 @@
 const newly_inferred = Core.CodeInstance[]   # only used to support verbose[]
 
+"""
+    PrecompileWorkloadError(err)
+
+Wrapper for errors that occur in user workload code. These are re-thrown to preserve
+the original error, while other internal errors are caught and logged gracefully.
+"""
+struct PrecompileWorkloadError <: Exception
+    err::Any
+end
+
+function Base.showerror(io::IO, e::PrecompileWorkloadError)
+    print(io, "PrecompileWorkloadError: ")
+    showerror(io, e.err)
+end
+
 function workload_enabled(mod::Module)
     try
         if load_preference(@__MODULE__, "precompile_workloads", true)
@@ -67,23 +82,32 @@ end
 """
 macro compile_workload(ex::Expr)
     local iscompiling = :($PrecompileTools.is_generating_output() && $PrecompileTools.workload_enabled(@__MODULE__))
-    ex = quote
+    user_ex = quote
         begin
             $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
-            $(esc(ex))
+            try
+                $(esc(ex))
+            catch e
+                throw($PrecompileTools.PrecompileWorkloadError(e))
+            end
         end
     end
-    ex = quote
-        $PrecompileTools.tag_newly_inferred_enable()
+    wrapped_ex = quote
         try
-            $ex
-        finally
-            $PrecompileTools.tag_newly_inferred_disable()
+            $PrecompileTools.tag_newly_inferred_enable()
+            try
+                $user_ex
+            finally
+                $PrecompileTools.tag_newly_inferred_disable()
+            end
+        catch e
+            e isa $PrecompileTools.PrecompileWorkloadError && rethrow(e.err)
+            @error "@compile_workload failed due to an error in PrecompileTools" exception=(e, catch_backtrace())
         end
     end
     return quote
         if $iscompiling || $PrecompileTools.verbose[]
-            $ex
+            $wrapped_ex
         end
     end
 end
@@ -116,9 +140,18 @@ macro setup_workload(ex::Expr)
     # trigger inference & codegen in undesirable ways (see #16).
     return quote
         if $iscompiling || $PrecompileTools.verbose[]
-            let
-                $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
-                $(esc(ex))
+            try
+                let
+                    $PrecompileTools.@latestworld_if_toplevel  # block inference from proceeding beyond this point (xref https://github.com/JuliaLang/julia/issues/57957)
+                    try
+                        $(esc(ex))
+                    catch e
+                        throw($PrecompileTools.PrecompileWorkloadError(e))
+                    end
+                end
+            catch e
+                e isa $PrecompileTools.PrecompileWorkloadError && rethrow(e.err)
+                @error "Workload failed, potentially due to Julia version incompatibility" exception=(e, catch_backtrace())
             end
         end
     end
