@@ -2,7 +2,7 @@ module PrecompileTools
 
 using Preferences
 
-export @setup_workload, @compile_workload, @recompile_invalidations
+export @setup_workload, @compile_workload, @recompile_invalidations, PrecompileWorkloadError
 
 const verbose = Ref(false)    # if true, prints all the precompiles
 

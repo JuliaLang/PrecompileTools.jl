@@ -12,9 +12,20 @@ macro recompile_invalidations(expr)
     return :(recompile_invalidations($__module__, $(QuoteNode(expr))))
 end
 
-const ReinferUtils = isdefined(Base, :ReinferUtils) ? Base.ReinferUtils : Base.StaticData
+const ReinferUtils = if isdefined(Base, :ReinferUtils)
+    Base.ReinferUtils
+elseif isdefined(Base, :StaticData)
+    Base.StaticData
+else
+    nothing
+end
 
 function recompile_invalidations(__module__::Module, @nospecialize expr)
+    if ReinferUtils === nothing
+        @error "@recompile_invalidations is not supported on this Julia version"
+        Core.eval(__module__, expr)
+        return nothing
+    end
     listi = ccall(:jl_debug_method_invalidation, Any, (Cint,), 1)
     liste = ReinferUtils.debug_method_invalidation(true)
     try
