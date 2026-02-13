@@ -73,7 +73,7 @@ function invalidation_leaves(listi, liste)
 
     # Process edge-validation events
     i, ilast = firstindex(liste), lastindex(liste)
-    while i <= ilast
+    while i+1 <= ilast
         tag = liste[i + 1]   # the tag is always second
         if tag == "method_globalref"
             push!(umis, Core.Compiler.get_ci_mi(liste[i + 2]))
