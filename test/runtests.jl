@@ -127,6 +127,14 @@ using Base: specializations
     invs = Any[m, "method_globalref", cis[1], nothing, Tuple{}, "insert_backedges_callee", cis[2], Any[m], cis[3], "verify_methods", cis[4]]
     @test PrecompileTools.invalidation_leaves([], invs) == Set(Core.Compiler.get_ci_mi.(cis[1:3]))
 
+    # Compiler and lowering code is not recompiled
+    @test !PrecompileTools.in_excluded_module(mis[1])
+    getmi(f, argtypes) = Core.Compiler.specialize_method(which(f, argtypes), Tuple{typeof(f), argtypes...}, Core.svec())
+    @test PrecompileTools.in_excluded_module(getmi(Core.Compiler.widenconst, (Core.Const,)))
+    if isdefined(Base, :JuliaLowering)
+        @test PrecompileTools.in_excluded_module(getmi(Base.JuliaLowering.lower, (Module, Base.Syntax)))
+    end
+
     # Coverage isn't on during package precompilation, so let's test a few things here
     PrecompileTools.precompile_mi(mis[1])
 

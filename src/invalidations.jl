@@ -24,9 +24,27 @@ function recompile_invalidations(__module__::Module, @nospecialize expr)
         ReinferUtils.debug_method_invalidation(false)
     end
     if ccall(:jl_generating_output, Cint, ()) == 1
-        foreach(precompile_mi, invalidation_leaves(listi, liste))
+        for mi in invalidation_leaves(listi, liste)
+            in_excluded_module(mi) || precompile_mi(mi)
+        end
     end
     nothing
+end
+
+# Compiler and lowering code runs in a frozen world age, so it keeps using the
+# original definitions and recompiling its invalidations would be wasted work
+const excluded_modules = Module[Core.Compiler]
+isdefined(Base, :JuliaLowering) && push!(excluded_modules, Base.JuliaLowering)
+
+function in_excluded_module(mi::Core.MethodInstance)
+    m = mi.def
+    mod = isa(m, Method) ? m.module : m::Module
+    while true
+        mod in excluded_modules && return true
+        parent = parentmodule(mod)
+        parent === mod && return false
+        mod = parent
+    end
 end
 
 function invalidation_leaves(listi, liste)
