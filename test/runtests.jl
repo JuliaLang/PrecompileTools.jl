@@ -4,6 +4,17 @@ using Pkg
 using UUIDs
 using Base: specializations
 
+# Recompiled code can be added behind the invalidated entry, so check every entry.
+function has_valid_ci(mi, world)
+    isdefined(mi, :cache) || return false
+    ci = mi.cache
+    while true
+        ci.min_world <= world <= ci.max_world && return true
+        isdefined(ci, :next) || return false
+        ci = ci.next
+    end
+end
+
 @testset "PrecompileTools.jl" begin
     push!(LOAD_PATH, @__DIR__)
 
@@ -145,10 +156,7 @@ using Base: specializations
                     nbits(::Int8) = 8
                     nbits(::Int16) = 16
                     call_nbits(c) = nbits(only(c))
-                    begin
-                        Base.Experimental.@force_compile
-                        call_nbits(Any[Int8(5)])
-                    end
+                    precompile(call_nbits, (Vector{Any},))
                     end
                     """)
                 end
@@ -193,7 +201,8 @@ using Base: specializations
                 m = only(methods(mod1.call_nbits))
                 mi = first(specializations(m))
                 wc = Base.get_world_counter()
-                @test recompile ? mi.cache.max_world >= wc : mi.cache.max_world < wc
+                @test isdefined(mi, :cache)
+                @test has_valid_ci(mi, wc) == recompile
             end
 
             # Edge-invalidation
@@ -216,10 +225,7 @@ using Base: specializations
                     module $pkg2
                     using $pkg1
                     call_nbits(c) = $pkg1.nbits(only(c))
-                    begin
-                        Base.Experimental.@force_compile
-                        call_nbits(Any[Int8(5)])
-                    end
+                    precompile(call_nbits, (Vector{Any},))
                     end
                     """)
                 end
@@ -259,7 +265,8 @@ using Base: specializations
                 m = only(methods(mod2.call_nbits))
                 mi = first(specializations(m))
                 wc = Base.get_world_counter()
-                @test recompile ? mi.cache.max_world >= wc : mi.cache.max_world < wc
+                @test isdefined(mi, :cache)
+                @test has_valid_ci(mi, wc) == recompile
             end
 
         end
