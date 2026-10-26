@@ -11,18 +11,30 @@ end
 
 @noinline is_generating_output() = ccall(:jl_generating_output, Cint, ()) == 1
 
+# The internals used below changed during Julia 1.12 development. If one is missing, as can
+# happen when bisecting Julia, the workload still runs but its callees may not be cached.
 macro latestworld_if_toplevel()
+    isdefined(Core, Symbol("@latestworld")) || return nothing
     Expr(Symbol("latestworld-if-toplevel"))
 end
 
 function tag_newly_inferred_enable()
-    ccall(:jl_tag_newly_inferred_enable, Cvoid, ())
+    try
+        ccall(:jl_tag_newly_inferred_enable, Cvoid, ())
+    catch err
+        @warn "PrecompileTools does not support this Julia build, so workloads may not be fully precompiled" exception=err maxlog=1
+        return nothing
+    end
     if !Base.generating_output()   # for verbose[]
         ccall(:jl_set_newly_inferred, Cvoid, (Any,), newly_inferred)
     end
 end
 function tag_newly_inferred_disable()
-    ccall(:jl_tag_newly_inferred_disable, Cvoid, ())
+    try
+        ccall(:jl_tag_newly_inferred_disable, Cvoid, ())
+    catch
+        return nothing   # enabling failed too, and already warned
+    end
     if !Base.generating_output()   # for verbose[]
         ccall(:jl_set_newly_inferred, Cvoid, (Any,), nothing)
     end
