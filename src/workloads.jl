@@ -1,4 +1,4 @@
-const newly_inferred = Core.CodeInstance[]   # only used to support verbose[]
+const newly_inferred = Any[]   # only used to support verbose[]; the runtime requires a Vector{Any}
 
 function workload_enabled(mod::Module)
     enabled || return false
@@ -28,6 +28,7 @@ function tag_newly_inferred_disable()
     end
     if verbose[]
         for ci in newly_inferred
+            ci isa Core.CodeInstance || continue
             println(ci.def)
         end
     end
