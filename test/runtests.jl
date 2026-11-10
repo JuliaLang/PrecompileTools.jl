@@ -147,15 +147,20 @@ end
     @test Set([mis[1], mis[2]]) ⊆ PrecompileTools.invalidation_leaves(invs, [])
     invs = Any[mis[1], 1, mis[2], "jl_method_table_insert", mis[2], "invalidate_mt_cache", m, "jl_method_table_insert"]
     @test PrecompileTools.invalidation_leaves(invs, []) == Set([mis[1], mis[2]])
-    invs = Any[m, "method_globalref", cis[1], nothing, Tuple{}, "insert_backedges_callee", cis[2], Any[m], cis[3], "verify_methods", cis[4]]
+    # Code cached by another interpreter is not recompiled
+    foreignci = Core.CodeInstance(Core.Compiler.get_ci_mi(cis[5]), :foreign, Any, Any, nothing, nothing, Int32(0),
+                                  UInt(1), typemax(UInt), UInt32(0), nothing, nothing, Core.svec())
+    invs = Any[m, "method_globalref", cis[1], nothing, Tuple{}, "insert_backedges_callee", cis[2], Any[m], cis[3], "verify_methods", cis[4],
+               foreignci, "verify_methods", cis[4]]
     @test PrecompileTools.invalidation_leaves([], invs) == Set(Core.Compiler.get_ci_mi.(cis[1:3]))
 
-    # Compiler and lowering code is not recompiled
-    @test !PrecompileTools.in_excluded_module(mis[1])
+    # Compiler, lowering and code-loading code is not recompiled
+    @test !PrecompileTools.runs_in_frozen_world(mis[1])
     getmi(f, argtypes) = Core.Compiler.specialize_method(which(f, argtypes), Tuple{typeof(f), argtypes...}, Core.svec())
-    @test PrecompileTools.in_excluded_module(getmi(Core.Compiler.widenconst, (Core.Const,)))
+    @test PrecompileTools.runs_in_frozen_world(getmi(Core.Compiler.widenconst, (Core.Const,)))
+    @test PrecompileTools.runs_in_frozen_world(getmi(Base.__require, (Base.PkgId,)))
     if isdefined(Base, :JuliaLowering)
-        @test PrecompileTools.in_excluded_module(getmi(Base.JuliaLowering.lower, (Module, Base.Syntax)))
+        @test PrecompileTools.runs_in_frozen_world(getmi(Base.JuliaLowering.lower, (Module, Base.Syntax)))
     end
 
     # Coverage isn't on during package precompilation, so let's test a few things here

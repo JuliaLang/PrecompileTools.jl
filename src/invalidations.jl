@@ -31,19 +31,22 @@ function recompile_invalidations(__module__::Module, @nospecialize expr)
     end
     if ccall(:jl_generating_output, Cint, ()) == 1
         for mi in invalidation_leaves(listi, liste)
-            in_excluded_module(mi) || precompile_mi(mi)
+            runs_in_frozen_world(mi) || precompile_mi(mi)
         end
     end
     nothing
 end
 
-# Compiler and lowering code runs in a frozen world age, so it keeps using the
-# original definitions and recompiling its invalidations would be wasted work
+# Compiler, lowering and code-loading code runs in a frozen world age. Code in a
+# pkgimage is only valid from the world it is loaded into, so these callers could never use it.
 const excluded_modules = Module[Core.Compiler]
 isdefined(Base, :JuliaLowering) && push!(excluded_modules, Base.JuliaLowering)
+# Code loading enters its frozen world through these methods
+const excluded_methods = isdefined(Base, :__require) ? collect(Method, methods(Base.__require)) : Method[]
 
-function in_excluded_module(mi::Core.MethodInstance)
+function runs_in_frozen_world(mi::Core.MethodInstance)
     m = mi.def
+    isa(m, Method) && m in excluded_methods && return true
     mod = isa(m, Method) ? m.module : m::Module
     while true
         mod in excluded_modules && return true
@@ -96,17 +99,19 @@ function invalidation_leaves(listi, liste)
     end
 
     # Process edge-validation events
+    # Recompiling only fills the native cache, so skip code cached by other interpreters
+    pushci!(ci::Core.CodeInstance) = ci.owner === nothing && push!(umis, Core.Compiler.get_ci_mi(ci))
     i, ilast = firstindex(liste), lastindex(liste)
     while i <= ilast
         tag = liste[i + 1]   # the tag is always second
         if tag == "method_globalref"
-            push!(umis, Core.Compiler.get_ci_mi(liste[i + 2]))
+            pushci!(liste[i + 2])
             i += 4
         elseif tag == "insert_backedges_callee"
-            push!(umis, Core.Compiler.get_ci_mi(liste[i + 2]))
+            pushci!(liste[i + 2])
             i += 4
         elseif tag == "verify_methods"
-            push!(umis, Core.Compiler.get_ci_mi(liste[i]))
+            pushci!(liste[i])
             i += 3
         else
             error("Unknown tag found in invalidation list: ", tag)
