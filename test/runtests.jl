@@ -155,13 +155,24 @@ end
     @test PrecompileTools.invalidation_leaves([], invs) == Set(Core.Compiler.get_ci_mi.(cis[1:3]))
 
     # Compiler, lowering and code-loading code is not recompiled
-    @test !PrecompileTools.runs_in_frozen_world(mis[1])
+    @test !PrecompileTools.skip_recompile(mis[1])
     getmi(f, argtypes) = Core.Compiler.specialize_method(which(f, argtypes), Tuple{typeof(f), argtypes...}, Core.svec())
-    @test PrecompileTools.runs_in_frozen_world(getmi(Core.Compiler.widenconst, (Core.Const,)))
-    @test PrecompileTools.runs_in_frozen_world(getmi(Base.__require, (Base.PkgId,)))
-    if isdefined(Base, :JuliaLowering)
-        @test PrecompileTools.runs_in_frozen_world(getmi(Base.JuliaLowering.lower, (Module, Base.Syntax)))
+    @test !PrecompileTools.skip_recompile(getmi(Base.sum, (Vector{Int},)))
+    @test PrecompileTools.skip_recompile(getmi(Core.Compiler.widenconst, (Core.Const,)))
+    @test PrecompileTools.skip_recompile(getmi(Base.__require, (Base.PkgId,)))
+    @test PrecompileTools.skip_recompile(getmi(Base.stale_cachefile, (String, String)))
+    if isdefined(Base, :Precompilation)
+        @test PrecompileTools.skip_recompile(getmi(Base.Precompilation.precompilepkgs, ()))
     end
+    if isdefined(Base, :JuliaLowering)
+        @test PrecompileTools.skip_recompile(getmi(Base.JuliaLowering.lower, (Module, Base.Syntax)))
+    end
+    # Callers invalidated only through code-loading code are not recompiled either
+    loadmi = getmi(Base.stale_cachefile, (String, String))
+    invs = Any[loadmi, 0, mis[2], 1, Tuple{}, mis[1], 0, mis[3], 1, Tuple{}, m, "jl_method_table_insert"]
+    @test PrecompileTools.invalidation_leaves(invs, []) == Set([mis[3]])
+    invs = Any[loadmi, 1, mis[2], 2, Tuple{}, mis[3], 1, Tuple{}, m, "jl_method_table_insert"]
+    @test PrecompileTools.invalidation_leaves(invs, []) == Set([mis[3]])
 
     # Coverage isn't on during package precompilation, so let's test a few things here
     PrecompileTools.precompile_mi(mis[1])

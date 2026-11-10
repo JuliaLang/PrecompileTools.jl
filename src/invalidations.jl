@@ -31,22 +31,24 @@ function recompile_invalidations(__module__::Module, @nospecialize expr)
     end
     if ccall(:jl_generating_output, Cint, ()) == 1
         for mi in invalidation_leaves(listi, liste)
-            runs_in_frozen_world(mi) || precompile_mi(mi)
+            skip_recompile(mi) || precompile_mi(mi)
         end
     end
     nothing
 end
 
-# Compiler, lowering and code-loading code runs in a frozen world age. Code in a
-# pkgimage is only valid from the world it is loaded into, so these callers could never use it.
+# Compiler and lowering code runs in a frozen world age. Code in a pkgimage is only
+# valid from the world it is loaded into, so these callers could never use it.
 const excluded_modules = Module[Core.Compiler]
 isdefined(Base, :JuliaLowering) && push!(excluded_modules, Base.JuliaLowering)
-# Code loading enters its frozen world through these methods
-const excluded_methods = isdefined(Base, :__require) ? collect(Method, methods(Base.__require)) : Method[]
+# Code loading mostly runs in a frozen world too. Its other callers (e.g. `Pkg.precompile`)
+# can compile it once when first needed, rather than every pkgimage carrying a copy.
+isdefined(Base, :Precompilation) && push!(excluded_modules, Base.Precompilation)
+is_loading_code(m::Method) = m.module === Base && m.file === Symbol("loading.jl")
 
-function runs_in_frozen_world(mi::Core.MethodInstance)
+function skip_recompile(mi::Core.MethodInstance)
     m = mi.def
-    isa(m, Method) && m in excluded_methods && return true
+    isa(m, Method) && is_loading_code(m) && return true
     mod = isa(m, Method) ? m.module : m::Module
     while true
         mod in excluded_modules && return true
@@ -61,6 +63,7 @@ function invalidation_leaves(listi, liste)
     # `queued` is a queue of length 0 or 1 of invalidated MethodInstances.
     # We wait to read the `depth` to find out if it's a leaf.
     queued, depth = nothing, 0
+    skiptree = intree = false
     function cachequeued(item, nextdepth)
         if queued !== nothing && nextdepth <= depth
             push!(umis, queued)
@@ -77,6 +80,7 @@ function invalidation_leaves(listi, liste)
                 nextitem = listi[i+1]
                 if nextitem == "invalidate_mt_cache"
                     cachequeued(nothing, 0)
+                    intree = false
                     i += 2
                     continue
                 end
@@ -85,7 +89,13 @@ function invalidation_leaves(listi, liste)
                     push!(umis, item)
                 end
                 if isa(nextitem, Integer)
-                    cachequeued(item, nextitem)
+                    if nextitem == 0 || !intree
+                        # a new tree; if its root isn't recompiled, its callers aren't either
+                        cachequeued(nothing, 0)
+                        skiptree = skip_recompile(item)
+                        intree = true
+                    end
+                    skiptree || cachequeued(item, nextitem)
                     i += 2
                     continue
                 end
@@ -95,6 +105,7 @@ function invalidation_leaves(listi, liste)
             push!(umis, queued)
             queued, depth = nothing, 0
         end
+        intree = false
         i += 1
     end
 
