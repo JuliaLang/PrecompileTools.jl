@@ -1,5 +1,9 @@
 const newly_inferred = Any[]   # only used to support verbose[]; the runtime requires a Vector{Any}
 
+# This dummy call ensures that `precompile_workloads` is recorded as a
+# compile-time preference for the `PrecompileTools` module.
+load_preference(@__MODULE__, "precompile_workloads", true)
+
 function workload_enabled(mod::Module)
     enabled || return false
     try
