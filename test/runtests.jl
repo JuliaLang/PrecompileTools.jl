@@ -96,6 +96,18 @@ end
         @test occursin("$(modscope)f(::$Int)", str)
         @test occursin("$(modscope)f(::String)", str)
     end
+    # PRECOMPILETOOLS_TIMING prints the time of each workload statement and the total
+    mktemp() do path, io
+        withenv("PRECOMPILETOOLS_TIMING" => "1") do
+            redirect_stdout(io) do
+                include(joinpath(@__DIR__, "PC_E", "src", "PC_E.jl"))
+            end
+        end
+        close(io)
+        str = read(path, String)
+        @test occursin(r"\d+ ms  ", str)
+        @test occursin("PC_E @compile_workload: ", str)
+    end
     PrecompileTools.verbose[] = oldval
 
     using NotToplevel
